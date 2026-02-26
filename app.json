@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.prime-fix"
     },
     "android": {
       "adaptiveIcon": {
@@ -30,7 +31,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png"
+          "image": "./assets/images/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#07090F"
         }
       ]
     ],
