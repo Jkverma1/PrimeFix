@@ -19,17 +19,20 @@ export default function ServiceCard({ service, selected, onSelect }: Props) {
       onPress={() => !disabled && onSelect(service.id)}
       style={({ pressed }) => [
         styles.wrapper,
+        styles.wrapperShadow,
+        selected && styles.selectedShadow,
         pressed && !disabled && styles.pressed,
         disabled && styles.cardDisabled,
       ]}
     >
       <LinearGradient
+        // unselected (active but not chosen) cards are plain white
         colors={
           disabled
             ? ["#f7f7f7", "#e2e2e2"]
             : selected
               ? [Colors.success, Colors.primary]
-              : ["rgba(0,0,0,0.1)", "rgba(0,0,0,0.3)"]
+              : ["#ffffff", "#ffffff"]
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -46,7 +49,11 @@ export default function ServiceCard({ service, selected, onSelect }: Props) {
         <Text
           style={[
             styles.label,
-            disabled ? styles.labelDisabled : styles.labelWhite,
+            disabled
+              ? styles.labelDisabled
+              : selected
+                ? styles.labelWhite
+                : styles.labelPrimary,
           ]}
         >
           {service.label}
@@ -56,6 +63,7 @@ export default function ServiceCard({ service, selected, onSelect }: Props) {
             styles.desc,
             selected && styles.descSelected,
             disabled && { color: Colors.text.primary },
+            !selected && !disabled && styles.descInactive,
           ]}
         >
           {service.description}
@@ -71,6 +79,22 @@ const styles = StyleSheet.create({
     width: "48%",
     marginBottom: Spacing.md,
   },
+  // outer container holds the shadow; gradients inside are not reliable
+  wrapperShadow: {
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  selectedShadow: {
+    // stronger lift when card is selected
+    shadowColor: Colors.primary,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
   card: {
     flex: 1,
     backgroundColor: Colors.bg.secondary,
@@ -81,11 +105,12 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.borderLight,
     minHeight: 140,
+    // slightly stronger shadow so unselected cards lift off the page
     shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
 
   cardSelected: {
@@ -118,6 +143,9 @@ const styles = StyleSheet.create({
   labelWhite: {
     color: Colors.text.white,
   },
+  labelPrimary: {
+    color: Colors.text.primary,
+  },
   labelDisabled: {
     color: Colors.text.primary,
   },
@@ -130,6 +158,9 @@ const styles = StyleSheet.create({
   descSelected: {
     color: Colors.text.white,
   },
+  descInactive: {
+    color: Colors.text.primary,
+  },
   coming: {
     marginTop: Spacing.sm,
     fontSize: Typography.sizes.xs,
@@ -138,6 +169,12 @@ const styles = StyleSheet.create({
   },
   cardDisabled: {
     opacity: 0.5,
+    // add a similar shadow so coming‑soon cards still feel like a card
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   pressed: {
     transform: [{ scale: 0.97 }],
