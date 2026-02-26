@@ -1,5 +1,7 @@
 // app/index.tsx  ← This is your Home Screen in Expo Router
 
+import MaskedView from "@react-native-masked-view/masked-view";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -41,7 +43,21 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <Text style={styles.title}>Book a Service</Text>
+          <MaskedView
+            maskElement={
+              <Text style={[styles.title, { backgroundColor: "transparent" }]}>
+                Book a Service
+              </Text>
+            }
+          >
+            <LinearGradient
+              colors={[Colors.primary, Colors.success]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Text style={[styles.title, { opacity: 0 }]}>Book a Service</Text>
+            </LinearGradient>
+          </MaskedView>
           <Text style={styles.subtitle}>Choose a service below.</Text>
         </View>
 
@@ -91,6 +107,7 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     marginBottom: Spacing.sm,
     letterSpacing: -0.5,
+    // baseline for masked gradient
   },
   subtitle: {
     fontSize: Typography.sizes.base,
