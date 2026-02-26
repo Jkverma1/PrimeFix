@@ -1,10 +1,17 @@
 // components/ServiceCard.tsx
 
-import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
-import Colors, { BorderRadius, Spacing, Typography } from "../constants/colors";
+import {
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Colors from "../constants/colors";
 import { Service } from "../types";
+
+const CARD_WIDTH = (Dimensions.get("window").width - 48 - 12) / 2;
 
 interface Props {
   service: Service;
@@ -13,170 +20,184 @@ interface Props {
 }
 
 export default function ServiceCard({ service, selected, onSelect }: Props) {
-  const disabled = service.comingSoon;
+  const isComingSoon = service.comingSoon;
+
   return (
-    <Pressable
-      onPress={() => !disabled && onSelect(service.id)}
-      style={({ pressed }) => [
-        styles.wrapper,
-        styles.wrapperShadow,
-        selected && styles.selectedShadow,
-        pressed && !disabled && styles.pressed,
-        disabled && styles.cardDisabled,
+    <TouchableOpacity
+      style={[
+        styles.card,
+        selected && styles.cardSelected,
+        isComingSoon && styles.cardDim,
       ]}
+      onPress={() => !isComingSoon && onSelect(service.id)}
+      activeOpacity={isComingSoon ? 1 : 0.75}
     >
-      <LinearGradient
-        // unselected (active but not chosen) cards are plain white
-        colors={
-          disabled
-            ? ["#f7f7f7", "#e2e2e2"]
-            : selected
-              ? [Colors.success, Colors.primary]
-              : ["#ffffff", "#ffffff"]
-        }
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[
-          styles.card,
-          selected && styles.cardSelected,
-          disabled && styles.cardDisabled,
-        ]}
-      >
-        <Text style={[styles.icon, disabled && styles.iconDisabled]}>
-          {" "}
+      {/* Selected checkmark — top right */}
+      {selected && (
+        <View style={styles.checkBadge}>
+          <Text style={styles.checkText}>✓</Text>
+        </View>
+      )}
+
+      {/* Icon */}
+      <View style={[styles.iconWrap, selected && styles.iconWrapSelected]}>
+        <Text style={[styles.icon, isComingSoon && styles.iconDim]}>
           {service.icon}
         </Text>
-        <Text
-          style={[
-            styles.label,
-            disabled
-              ? styles.labelDisabled
-              : selected
-                ? styles.labelWhite
-                : styles.labelPrimary,
-          ]}
-        >
-          {service.label}
-        </Text>
-        <Text
-          style={[
-            styles.desc,
-            selected && styles.descSelected,
-            disabled && { color: Colors.text.primary },
-            !selected && !disabled && styles.descInactive,
-          ]}
-        >
-          {service.description}
-        </Text>
-        {disabled && <Text style={styles.coming}>Coming Soon</Text>}
-      </LinearGradient>
-    </Pressable>
+      </View>
+
+      {/* Label */}
+      <Text
+        style={[
+          styles.label,
+          selected && styles.labelSelected,
+          isComingSoon && styles.dimText,
+        ]}
+        numberOfLines={1}
+      >
+        {service.label}
+      </Text>
+
+      {/* Description */}
+      <Text
+        style={[styles.desc, isComingSoon && styles.dimText]}
+        numberOfLines={2}
+      >
+        {service.description}
+      </Text>
+
+      {/* Price OR Coming Soon */}
+      {isComingSoon ? (
+        <View style={styles.comingSoonBadge}>
+          <Text style={styles.comingSoonText}>Coming Soon</Text>
+        </View>
+      ) : (
+        <View style={styles.priceRow}>
+          <Text style={styles.priceLabel}>Starts at </Text>
+          <Text
+            style={[styles.priceValue, selected && styles.priceValueSelected]}
+          >
+            ₹{service.startingPrice}
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    width: "48%",
-    marginBottom: Spacing.md,
-  },
-  // outer container holds the shadow; gradients inside are not reliable
-  wrapperShadow: {
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
-  },
-  selectedShadow: {
-    // stronger lift when card is selected
-    shadowColor: Colors.primary,
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
   card: {
-    flex: 1,
-    backgroundColor: Colors.bg.secondary,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
+    width: CARD_WIDTH,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
     alignItems: "center",
-    justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: Colors.borderLight,
-    minHeight: 140,
-    // slightly stronger shadow so unselected cards lift off the page
+    borderColor: "#F0F0F5",
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
+    position: "relative",
   },
-
   cardSelected: {
     borderColor: Colors.primary,
-    borderWidth: 2,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: "#F0FAFE",
     shadowColor: Colors.primary,
     shadowOpacity: 0.15,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
     elevation: 4,
   },
-  icon: {
-    fontSize: 44,
-    marginBottom: Spacing.md,
-    color: Colors.text.white,
+  cardDim: {
+    opacity: 0.6,
   },
-  iconDisabled: {
-    color: Colors.text.secondary,
+
+  /* Icon */
+  iconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#F4F6FA",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+    marginTop: 4,
   },
+  iconWrapSelected: {
+    backgroundColor: "#DDEFFA",
+  },
+  icon: { fontSize: 32 },
+  iconDim: { opacity: 0.45 },
+
+  /* Text */
   label: {
-    fontSize: Typography.sizes.lg,
-    fontWeight: Typography.weights.bold,
-    marginBottom: Spacing.sm,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1A1A2E",
+    marginBottom: 3,
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.15)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
   },
-  labelWhite: {
-    color: Colors.text.white,
-  },
-  labelPrimary: {
-    color: Colors.text.primary,
-  },
-  labelDisabled: {
-    color: Colors.text.primary,
-  },
+  labelSelected: { color: Colors.primary },
   desc: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.text.white,
+    fontSize: 11,
+    color: "#9CA3AF",
     textAlign: "center",
     lineHeight: 16,
+    marginBottom: 10,
   },
-  descSelected: {
-    color: Colors.text.white,
+  dimText: { color: "#C8CDD8" },
+
+  /* Price row */
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    backgroundColor: "#F0FBF8",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginTop: 2,
   },
-  descInactive: {
-    color: Colors.text.primary,
+  priceLabel: {
+    fontSize: 10,
+    color: "#6B7280",
+    fontWeight: "500",
   },
-  coming: {
-    marginTop: Spacing.sm,
-    fontSize: Typography.sizes.xs,
-    color: Colors.warning,
-    fontWeight: Typography.weights.semibold,
+  priceValue: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1DB8A0", // teal — matches app gradient start
   },
-  cardDisabled: {
-    opacity: 0.5,
-    // add a similar shadow so coming‑soon cards still feel like a card
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+  priceValueSelected: {
+    color: Colors.primary,
   },
-  pressed: {
-    transform: [{ scale: 0.97 }],
+
+  /* Coming soon badge */
+  comingSoonBadge: {
+    backgroundColor: "#FFF7ED",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginTop: 2,
   },
+  comingSoonText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#F59E0B",
+    letterSpacing: 0.3,
+  },
+
+  /* Selected check */
+  checkBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkText: { color: "#fff", fontSize: 11, fontWeight: "800" },
 });

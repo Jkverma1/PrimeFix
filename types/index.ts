@@ -8,17 +8,14 @@ export type ServiceType =
   | "cleaner"
   | "ac_repair"
   | "pest_control"
-  | "home_tutor"; // extra services (mostly coming soon)
+  | "home_tutor";
 
 export interface Service {
   id: ServiceType;
   label: string;
   icon: string;
   description: string;
-  /**
-   * When true the service is not yet available; the UI can show a "Coming Soon" tag
-   * and prevent selection. Defaults to false.
-   */
+  startingPrice: number; // ← in ₹, e.g. 199
   comingSoon?: boolean;
 }
 

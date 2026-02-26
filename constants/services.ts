@@ -1,3 +1,5 @@
+// constants/services.ts
+
 import { Service } from "../types";
 
 export const SERVICES: Service[] = [
@@ -6,18 +8,21 @@ export const SERVICES: Service[] = [
     label: "Plumber",
     icon: "🔧",
     description: "Leaks, pipes, faucets & more",
+    startingPrice: 199,
   },
   {
     id: "electrician",
     label: "Electrician",
     icon: "⚡",
     description: "Wiring, repairs, installations",
+    startingPrice: 249,
   },
   {
     id: "carpenter",
     label: "Carpenter",
     icon: "🪚",
     description: "Furniture, doors & shelves",
+    startingPrice: 299,
     comingSoon: true,
   },
   {
@@ -25,6 +30,7 @@ export const SERVICES: Service[] = [
     label: "Painter",
     icon: "🖌️",
     description: "Interior & exterior painting",
+    startingPrice: 499,
     comingSoon: true,
   },
   {
@@ -32,6 +38,7 @@ export const SERVICES: Service[] = [
     label: "Home Cleaning",
     icon: "🧹",
     description: "Routine cleaning & deep cleans",
+    startingPrice: 349,
     comingSoon: true,
   },
   {
@@ -39,6 +46,7 @@ export const SERVICES: Service[] = [
     label: "AC Repair",
     icon: "❄️",
     description: "Air conditioner service & repairs",
+    startingPrice: 399,
     comingSoon: true,
   },
   {
@@ -46,6 +54,7 @@ export const SERVICES: Service[] = [
     label: "Pest Control",
     icon: "🐜",
     description: "Termite, cockroach & rodent removal",
+    startingPrice: 599,
     comingSoon: true,
   },
   {
@@ -53,6 +62,7 @@ export const SERVICES: Service[] = [
     label: "Home Tutor",
     icon: "📚",
     description: "Tuition for students in various subjects",
+    startingPrice: 299,
     comingSoon: true,
   },
 ];
@@ -63,7 +73,4 @@ export const CONTACT = {
   email: "sonijatin9227@gmail.com",
 };
 
-// Optionally configure a lightweight serverless email endpoint such as
-// Formspree or EmailJS. This lets the app POST the request directly and
-// you receive it via email without involving the user’s mail client.
 export const EMAIL_ENDPOINT = "https://formspree.io/f/xojnrwkg";
