@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import Colors from '../constants/colors';
+import Colors, { Typography, Spacing, BorderRadius } from '../constants/colors';
 import { SERVICES } from '../constants/services';
 import { ServiceType } from '../types';
 import ServiceCard from '../components/ServiceCard';
@@ -64,18 +64,39 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg.primary },
-  scroll: { padding: 24, flexGrow: 1 },
-  header: { alignItems: 'center', marginBottom: 32, marginTop: 12 },
-  title: { fontSize: 26, fontWeight: '800', color: Colors.text.primary, marginBottom: 6 },
-  subtitle: { fontSize: 15, color: Colors.text.secondary },
-  cardsRow: { flexDirection: 'row', marginBottom: 16 },
-  hint: { textAlign: 'center', color: Colors.text.secondary, fontSize: 14, marginTop: 8 },
-  hintBold: { fontWeight: '700', color: Colors.primary },
+  scroll: { padding: Spacing.xl, paddingTop: Spacing.lg, flexGrow: 1 },
+  header: { alignItems: 'center', marginBottom: Spacing['3xl'], marginTop: Spacing.md },
+  title: {
+    fontSize: Typography.sizes['3xl'],
+    fontWeight: Typography.weights.extrabold,
+    color: Colors.text.primary,
+    marginBottom: Spacing.sm,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: Typography.sizes.base,
+    color: Colors.text.secondary,
+    fontWeight: Typography.weights.medium,
+  },
+  cardsRow: { flexDirection: 'row', marginBottom: Spacing.xl, gap: Spacing.md },
+  hint: {
+    textAlign: 'center',
+    color: Colors.text.secondary,
+    fontSize: Typography.sizes.sm,
+    marginTop: Spacing.lg,
+    fontWeight: Typography.weights.medium,
+  },
+  hintBold: { fontWeight: Typography.weights.bold, color: Colors.primary },
   footer: {
-    padding: 20,
-    paddingBottom: 32,
+    padding: Spacing.lg,
+    paddingBottom: Spacing['2xl'],
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.bg.primary,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: -2 },
+    elevation: 4,
   },
 });

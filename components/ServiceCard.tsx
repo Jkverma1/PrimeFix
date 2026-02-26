@@ -3,6 +3,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import Colors from '../constants/colors';
+import { Typography, Spacing, BorderRadius } from '../constants/colors';
 import { Service } from '../types';
 
 interface Props {
@@ -16,7 +17,7 @@ export default function ServiceCard({ service, selected, onSelect }: Props) {
     <TouchableOpacity
       style={[styles.card, selected && styles.cardSelected]}
       onPress={() => onSelect(service.id)}
-      activeOpacity={0.75}
+      activeOpacity={0.7}
     >
       <Text style={styles.icon}>{service.icon}</Text>
       <Text style={[styles.label, selected && styles.labelSelected]}>{service.label}</Text>
@@ -29,19 +30,48 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: Colors.bg.secondary,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    marginHorizontal: 6,
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: Colors.borderLight,
+    marginHorizontal: Spacing.sm,
+    minHeight: 140,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   cardSelected: {
     borderColor: Colors.primary,
+    borderWidth: 2,
     backgroundColor: Colors.primaryLight,
+    shadowColor: Colors.primary,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-  icon: { fontSize: 40, marginBottom: 10 },
-  label: { fontSize: 15, fontWeight: '700', color: Colors.text.secondary, marginBottom: 4 },
-  labelSelected: { color: Colors.primary },
-  desc: { fontSize: 12, color: Colors.text.light, textAlign: 'center' },
+  icon: {
+    fontSize: 44,
+    marginBottom: Spacing.md,
+  },
+  label: {
+    fontSize: Typography.sizes.lg,
+    fontWeight: Typography.weights.bold,
+    color: Colors.text.secondary,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
+  },
+  labelSelected: {
+    color: Colors.primary,
+  },
+  desc: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.text.tertiary,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
 });

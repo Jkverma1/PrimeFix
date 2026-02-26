@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import AppButton from "../components/AppButton";
 import AppInput from "../components/AppInput";
-import Colors from "../constants/colors";
+import Colors, { Typography, Spacing, BorderRadius } from "../constants/colors";
 import { SERVICES } from "../constants/services";
 import { useServiceRequest } from "../hooks/useServiceRequest";
 import { ServiceType } from "../types";
@@ -127,27 +127,38 @@ export default function RequestScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg.primary },
-  scroll: { padding: 24, paddingBottom: 8 },
+  scroll: { padding: Spacing.xl, paddingBottom: Spacing.sm },
   tag: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: Typography.sizes.xs,
+    fontWeight: Typography.weights.bold,
     color: Colors.primary,
     backgroundColor: Colors.primaryLight,
     alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginBottom: 20,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+    marginBottom: Spacing.xl,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  textarea: { height: 100, textAlignVertical: "top", paddingTop: 12 },
-  submitError: { color: Colors.error, textAlign: "center", marginBottom: 12 },
+  textarea: { height: 100, textAlignVertical: "top", paddingTop: Spacing.md },
+  submitError: {
+    color: Colors.error,
+    textAlign: "center",
+    marginBottom: Spacing.lg,
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.medium,
+  },
   footer: {
-    padding: 20,
-    paddingBottom: 32,
+    padding: Spacing.lg,
+    paddingBottom: Spacing['2xl'],
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.bg.primary,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: -2 },
+    elevation: 4,
   },
 });

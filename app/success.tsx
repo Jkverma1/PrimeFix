@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import AppButton from "../components/AppButton";
-import Colors from "../constants/colors";
+import Colors, { Typography, Spacing, BorderRadius } from "../constants/colors";
 import { CONTACT } from "../constants/services";
 
 export default function SuccessScreen() {
@@ -78,43 +78,54 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 32,
+    padding: Spacing['2xl'],
   },
   circle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: BorderRadius.full,
     backgroundColor: Colors.success,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 28,
+    marginBottom: Spacing['2xl'],
     shadowColor: Colors.success,
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    elevation: 12,
   },
-  check: { fontSize: 50, color: "#fff", fontWeight: "700" },
+  check: {
+    fontSize: 56,
+    color: "#fff",
+    fontWeight: Typography.weights.bold,
+  },
   title: {
-    fontSize: 28,
-    fontWeight: "800",
+    fontSize: Typography.sizes['3xl'],
+    fontWeight: Typography.weights.extrabold,
     color: Colors.text.primary,
-    marginBottom: 12,
+    marginBottom: Spacing.md,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: Typography.sizes.base,
     color: Colors.text.secondary,
     textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 40,
+    lineHeight: 24,
+    marginBottom: Spacing['2xl'],
+    fontWeight: Typography.weights.medium,
   },
-  actions: { width: "100%", gap: 12 },
+  requestInfo: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.text.tertiary,
+    marginBottom: Spacing['2xl'],
+    fontWeight: Typography.weights.medium,
+  },
+  actions: { width: "100%", gap: Spacing.md, marginBottom: Spacing.xl },
   btn: { width: "100%" },
-  requestInfo: { fontSize: 13, color: Colors.text.secondary, marginTop: 8 },
   backLink: {
-    marginTop: 32,
-    fontSize: 15,
+    marginTop: Spacing.xl,
+    fontSize: Typography.sizes.base,
     color: Colors.primary,
-    fontWeight: "600",
+    fontWeight: Typography.weights.semibold,
   },
 });
