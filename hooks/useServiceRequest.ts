@@ -1,9 +1,10 @@
 // hooks/useServiceRequest.ts
 
+import * as Clipboard from "expo-clipboard";
 import * as MailComposer from "expo-mail-composer";
 import { useState } from "react";
 import { Linking } from "react-native";
-import { CONTACT } from "../constants/services";
+import { CONTACT, EMAIL_ENDPOINT } from "../constants/services";
 import { ServiceRequestForm, ServiceRequestResponse } from "../types";
 // Previously this hook sent data to a backend API. Since the backend
 // isn't available yet, we'll open the user's mail client with the form
@@ -28,6 +29,29 @@ Issue: ${form.issue}
 Created At: ${new Date().toISOString()}`;
 
     try {
+      // first try sending via optional email endpoint (Formspree/EmailJS etc.)
+      if (EMAIL_ENDPOINT && EMAIL_ENDPOINT.includes('formspree.io')) {
+        const resp = await fetch(EMAIL_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            serviceType: form.serviceType,
+            name: form.name,
+            phone: form.phone,
+            address: form.address,
+            issue: form.issue,
+          }),
+        });
+        if (!resp.ok) {
+          // let it fall through to mail composer fallback
+          console.warn('email endpoint responded', resp.status);
+        } else {
+          // success path – return immediately
+          const fakeId = Date.now().toString();
+          return { success: true, requestId: fakeId, message: 'Sent via endpoint' };
+        }
+      }
+
       // try using MailComposer (better UX on devices)
       if (await MailComposer.isAvailableAsync()) {
         await MailComposer.composeAsync({
@@ -59,6 +83,15 @@ Created At: ${new Date().toISOString()}`;
         msg =
           "Could not launch email client. Please install an email app and try again.";
       }
+
+      // if no mail client, copy details to clipboard and notify
+      if (msg === "No mail client is configured on this device") {
+        await Clipboard.setStringAsync(body);
+        msg =
+          "No Mail App found - details copied to clipboard. Paste them into an email and send to " +
+          CONTACT.email;
+      }
+
       setError(msg);
       throw new Error(msg);
     } finally {

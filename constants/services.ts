@@ -23,3 +23,8 @@ export const CONTACT = {
   whatsapp: "919999999999",
   email: "sonijatin9227@gmail.com",
 };
+
+// Optionally configure a lightweight serverless email endpoint such as
+// Formspree or EmailJS. This lets the app POST the request directly and
+// you receive it via email without involving the user’s mail client.
+export const EMAIL_ENDPOINT = "https://formspree.io/f/xojnrwkg";
