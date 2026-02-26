@@ -97,7 +97,13 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     fontWeight: Typography.weights.medium,
   },
-  cardsRow: { flexDirection: "row", marginBottom: Spacing.xl, gap: Spacing.md },
+  cardsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: Spacing.xl,
+    gap: Spacing.md,
+  },
   hint: {
     textAlign: "center",
     color: Colors.text.secondary,

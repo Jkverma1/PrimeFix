@@ -12,24 +12,30 @@ interface Props {
 }
 
 export default function ServiceCard({ service, selected, onSelect }: Props) {
+  const disabled = service.comingSoon;
   return (
     <TouchableOpacity
-      style={[styles.card, selected && styles.cardSelected]}
-      onPress={() => onSelect(service.id)}
-      activeOpacity={0.7}
+      style={[
+        styles.card,
+        selected && styles.cardSelected,
+        disabled && styles.cardDisabled,
+      ]}
+      onPress={() => !disabled && onSelect(service.id)}
+      activeOpacity={disabled ? 1 : 0.7}
     >
       <Text style={styles.icon}>{service.icon}</Text>
       <Text style={[styles.label, selected && styles.labelSelected]}>
         {service.label}
       </Text>
       <Text style={styles.desc}>{service.description}</Text>
+      {disabled && <Text style={styles.coming}>Coming Soon</Text>}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
+    width: "48%",
     backgroundColor: Colors.bg.secondary,
     borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
@@ -37,7 +43,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1.5,
     borderColor: Colors.borderLight,
-    marginHorizontal: Spacing.sm,
+    marginBottom: Spacing.md,
     minHeight: 140,
     shadowColor: "#000",
     shadowOpacity: 0.05,
@@ -74,5 +80,14 @@ const styles = StyleSheet.create({
     color: Colors.text.tertiary,
     textAlign: "center",
     lineHeight: 16,
+  },
+  coming: {
+    marginTop: Spacing.sm,
+    fontSize: Typography.sizes.xs,
+    color: Colors.warning,
+    fontWeight: Typography.weights.semibold,
+  },
+  cardDisabled: {
+    opacity: 0.5,
   },
 });

@@ -13,9 +13,48 @@ export const SERVICES: Service[] = [
     icon: "⚡",
     description: "Wiring, repairs, installations",
   },
-  // Future — uncomment when ready:
-  // { id: 'carpenter', label: 'Carpenter', icon: '🪚', description: 'Furniture & doors' },
-  // { id: 'painter',   label: 'Painter',   icon: '🖌️', description: 'Interior & exterior' },
+  {
+    id: "carpenter",
+    label: "Carpenter",
+    icon: "🪚",
+    description: "Furniture, doors & shelves",
+    comingSoon: true,
+  },
+  {
+    id: "painter",
+    label: "Painter",
+    icon: "🖌️",
+    description: "Interior & exterior painting",
+    comingSoon: true,
+  },
+  {
+    id: "cleaner",
+    label: "Home Cleaning",
+    icon: "🧹",
+    description: "Routine cleaning & deep cleans",
+    comingSoon: true,
+  },
+  {
+    id: "ac_repair",
+    label: "AC Repair",
+    icon: "❄️",
+    description: "Air conditioner service & repairs",
+    comingSoon: true,
+  },
+  {
+    id: "pest_control",
+    label: "Pest Control",
+    icon: "🐜",
+    description: "Termite, cockroach & rodent removal",
+    comingSoon: true,
+  },
+  {
+    id: "home_tutor",
+    label: "Home Tutor",
+    icon: "📚",
+    description: "Tuition for students in various subjects",
+    comingSoon: true,
+  },
 ];
 
 export const CONTACT = {
