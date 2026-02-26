@@ -1,5 +1,6 @@
 // components/AppButton.tsx
 
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
   ActivityIndicator,
@@ -29,23 +30,34 @@ export default function AppButton({
 }: Props) {
   return (
     <TouchableOpacity
-      style={[
-        styles.btn,
-        styles[variant],
-        (disabled || loading) && styles.disabled,
-        style,
-      ]}
+      style={[styles.btn, (disabled || loading) && styles.disabled, style]}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.85}
     >
+      <LinearGradient
+        colors={
+          variant === "success"
+            ? [Colors.success, Colors.primary]
+            : variant === "primary"
+              ? [Colors.primaryDark, Colors.primary]
+              : ["transparent", "transparent"]
+        }
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={[StyleSheet.absoluteFill, styles.gradient]}
+      />
       {loading ? (
         <ActivityIndicator
           color={variant === "outline" ? Colors.primary : "#fff"}
         />
       ) : (
         <Text
-          style={[styles.text, variant === "outline" && styles.textOutline]}
+          style={[
+            styles.text,
+            variant === "outline" && styles.textOutline,
+            disabled && styles.textDisabled,
+          ]}
         >
           {title}
         </Text>
@@ -91,5 +103,11 @@ const styles = StyleSheet.create({
   },
   textOutline: {
     color: Colors.primary,
+  },
+  textDisabled: {
+    color: Colors.text.light,
+  },
+  gradient: {
+    borderRadius: BorderRadius.lg,
   },
 });
