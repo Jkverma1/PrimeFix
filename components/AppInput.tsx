@@ -1,9 +1,14 @@
 // components/AppInput.tsx
 
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
-import Colors from '../constants/colors';
-import { Typography, Spacing, BorderRadius } from '../constants/colors';
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  View,
+} from "react-native";
+import Colors, { BorderRadius, Spacing, Typography } from "../constants/colors";
 
 interface Props extends TextInputProps {
   label: string;

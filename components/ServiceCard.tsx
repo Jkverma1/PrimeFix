@@ -1,15 +1,14 @@
 // components/ServiceCard.tsx
 
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import Colors from '../constants/colors';
-import { Typography, Spacing, BorderRadius } from '../constants/colors';
-import { Service } from '../types';
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import Colors, { BorderRadius, Spacing, Typography } from "../constants/colors";
+import { Service } from "../types";
 
 interface Props {
   service: Service;
   selected: boolean;
-  onSelect: (id: Service['id']) => void;
+  onSelect: (id: Service["id"]) => void;
 }
 
 export default function ServiceCard({ service, selected, onSelect }: Props) {
@@ -20,7 +19,9 @@ export default function ServiceCard({ service, selected, onSelect }: Props) {
       activeOpacity={0.7}
     >
       <Text style={styles.icon}>{service.icon}</Text>
-      <Text style={[styles.label, selected && styles.labelSelected]}>{service.label}</Text>
+      <Text style={[styles.label, selected && styles.labelSelected]}>
+        {service.label}
+      </Text>
       <Text style={styles.desc}>{service.description}</Text>
     </TouchableOpacity>
   );
@@ -32,13 +33,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bg.secondary,
     borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1.5,
     borderColor: Colors.borderLight,
     marginHorizontal: Spacing.sm,
     minHeight: 140,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 1 },
@@ -63,7 +64,7 @@ const styles = StyleSheet.create({
     fontWeight: Typography.weights.bold,
     color: Colors.text.secondary,
     marginBottom: Spacing.sm,
-    textAlign: 'center',
+    textAlign: "center",
   },
   labelSelected: {
     color: Colors.primary,
@@ -71,7 +72,7 @@ const styles = StyleSheet.create({
   desc: {
     fontSize: Typography.sizes.xs,
     color: Colors.text.tertiary,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 16,
   },
 });

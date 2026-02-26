@@ -1,25 +1,40 @@
 // app/index.tsx  ← This is your Home Screen in Expo Router
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import Colors, { Typography, Spacing, BorderRadius } from '../constants/colors';
-import { SERVICES } from '../constants/services';
-import { ServiceType } from '../types';
-import ServiceCard from '../components/ServiceCard';
-import AppButton from '../components/AppButton';
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import AppButton from "../components/AppButton";
+import ServiceCard from "../components/ServiceCard";
+import Colors, { Spacing, Typography } from "../constants/colors";
+import { SERVICES } from "../constants/services";
+import { ServiceType } from "../types";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceType | null>(
+    null,
+  );
 
   const handleContinue = () => {
     if (!selectedService) {
-      Alert.alert('Select a Service', 'Please choose a service before continuing.');
+      Alert.alert(
+        "Select a Service",
+        "Please choose a service before continuing.",
+      );
       return;
     }
     // Pass serviceType as a query param
-    router.push({ pathname: '/request', params: { serviceType: selectedService } });
+    router.push({
+      pathname: "/request",
+      params: { serviceType: selectedService },
+    });
   };
 
   return (
@@ -43,7 +58,7 @@ export default function HomeScreen() {
 
         {selectedService && (
           <Text style={styles.hint}>
-            Selected:{' '}
+            Selected:{" "}
             <Text style={styles.hintBold}>
               {SERVICES.find((s) => s.id === selectedService)?.label}
             </Text>
@@ -65,9 +80,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg.primary },
   scroll: { padding: Spacing.xl, paddingTop: Spacing.lg, flexGrow: 1 },
-  header: { alignItems: 'center', marginBottom: Spacing['3xl'], marginTop: Spacing.md },
+  header: {
+    alignItems: "center",
+    marginBottom: Spacing["3xl"],
+    marginTop: Spacing.md,
+  },
   title: {
-    fontSize: Typography.sizes['3xl'],
+    fontSize: Typography.sizes["3xl"],
     fontWeight: Typography.weights.extrabold,
     color: Colors.text.primary,
     marginBottom: Spacing.sm,
@@ -78,9 +97,9 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     fontWeight: Typography.weights.medium,
   },
-  cardsRow: { flexDirection: 'row', marginBottom: Spacing.xl, gap: Spacing.md },
+  cardsRow: { flexDirection: "row", marginBottom: Spacing.xl, gap: Spacing.md },
   hint: {
-    textAlign: 'center',
+    textAlign: "center",
     color: Colors.text.secondary,
     fontSize: Typography.sizes.sm,
     marginTop: Spacing.lg,
@@ -89,11 +108,11 @@ const styles = StyleSheet.create({
   hintBold: { fontWeight: Typography.weights.bold, color: Colors.primary },
   footer: {
     padding: Spacing.lg,
-    paddingBottom: Spacing['2xl'],
+    paddingBottom: Spacing["2xl"],
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.bg.primary,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: -2 },

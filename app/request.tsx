@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import AppButton from "../components/AppButton";
 import AppInput from "../components/AppInput";
-import Colors, { Typography, Spacing, BorderRadius } from "../constants/colors";
+import Colors, { BorderRadius, Spacing, Typography } from "../constants/colors";
 import { SERVICES } from "../constants/services";
 import { useServiceRequest } from "../hooks/useServiceRequest";
 import { ServiceType } from "../types";
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: Spacing.lg,
-    paddingBottom: Spacing['2xl'],
+    paddingBottom: Spacing["2xl"],
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.bg.primary,

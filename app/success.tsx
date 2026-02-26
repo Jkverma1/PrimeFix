@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import AppButton from "../components/AppButton";
-import Colors, { Typography, Spacing, BorderRadius } from "../constants/colors";
+import Colors, { BorderRadius, Spacing, Typography } from "../constants/colors";
 import { CONTACT } from "../constants/services";
 
 export default function SuccessScreen() {
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: Spacing['2xl'],
+    padding: Spacing["2xl"],
   },
   circle: {
     width: 120,
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.success,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing["2xl"],
     shadowColor: Colors.success,
     shadowOpacity: 0.25,
     shadowRadius: 16,
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     fontWeight: Typography.weights.bold,
   },
   title: {
-    fontSize: Typography.sizes['3xl'],
+    fontSize: Typography.sizes["3xl"],
     fontWeight: Typography.weights.extrabold,
     color: Colors.text.primary,
     marginBottom: Spacing.md,
@@ -111,13 +111,13 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     textAlign: "center",
     lineHeight: 24,
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing["2xl"],
     fontWeight: Typography.weights.medium,
   },
   requestInfo: {
     fontSize: Typography.sizes.sm,
     color: Colors.text.tertiary,
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing["2xl"],
     fontWeight: Typography.weights.medium,
   },
   actions: { width: "100%", gap: Spacing.md, marginBottom: Spacing.xl },
