@@ -44,7 +44,7 @@ Created At: ${new Date().toISOString()}`;
         // check if the device can handle the link before opening
         const canOpen = await Linking.canOpenURL(url);
         if (!canOpen) {
-          throw new Error('No mail client is configured on this device');
+          throw new Error("No mail client is configured on this device");
         }
         await Linking.openURL(url);
       }
@@ -55,8 +55,9 @@ Created At: ${new Date().toISOString()}`;
     } catch (err: any) {
       let msg = err?.message ?? "Failed to open mail composer.";
       // handle the common mailto failure message
-      if (msg.startsWith('Unable to open URL')) {
-        msg = 'Could not launch email client. Please install an email app and try again.';
+      if (msg.startsWith("Unable to open URL")) {
+        msg =
+          "Could not launch email client. Please install an email app and try again.";
       }
       setError(msg);
       throw new Error(msg);
