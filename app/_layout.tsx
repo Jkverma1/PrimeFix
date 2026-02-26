@@ -1,24 +1,23 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+// app/_layout.tsx
+// Root layout — wraps all screens. Add providers here (auth, theme, etc.) as app grows.
+
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import Colors from '../constants/colors';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.bg.primary },
+        headerTintColor: Colors.text.primary,
+        headerTitleStyle: { fontWeight: '700', fontSize: 18 },
+        headerShadowVisible: false,
+        contentStyle: { backgroundColor: Colors.bg.primary },
+      }}
+    >
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="request" options={{ title: 'Service Request' }} />
+      <Stack.Screen name="success" options={{ headerShown: false, gestureEnabled: false }} />
+    </Stack>
   );
 }
