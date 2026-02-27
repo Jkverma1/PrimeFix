@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.prime-fix"
+      "bundleIdentifier": "com.primefix"
     },
     "android": {
       "adaptiveIcon": {
@@ -31,11 +31,18 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#020B1A"
+      "backgroundColor": "#FFFFFF"
     },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "73d81040-2420-4676-8ea5-e683dc7890f4"
+      }
+    },
+    "owner": "jatin.kumar"
   }
 }
