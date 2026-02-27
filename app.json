@@ -27,17 +27,12 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash.png",
-          "resizeMode": "cover",
-          "backgroundColor": "#07090F"
-        }
-      ]
-    ],
+    "plugins": ["expo-router"],
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#020B1A"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

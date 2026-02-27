@@ -5,7 +5,6 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
-  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -53,7 +52,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.root}>
-      {/* ── COLORED HEADER (teal→blue gradient, like UC's purple) ── */}
+      {/* ── GRADIENT HEADER ── */}
       <LinearGradient
         colors={["#1DB8A0", "#1A6FD4"]}
         start={{ x: 0, y: 0 }}
@@ -61,23 +60,18 @@ export default function HomeScreen() {
         style={styles.header}
       >
         <SafeAreaView>
-          {/* Top row: title + notification bell placeholder */}
+          {/* Top row */}
           <View style={styles.headerTop}>
-            <View style={styles.logoAndTitle}>
-              <Image
-                source={require("../assets/images/app_logo.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
+            <View>
               <Text style={styles.appName}>PrimeFix</Text>
+              <Text style={styles.appTagline}>Home Services · Done Right</Text>
             </View>
-            {/* Bell icon — simple placeholder, swap with vector icon later */}
             <TouchableOpacity style={styles.bellBtn} activeOpacity={0.8}>
               <Text style={styles.bellIcon}>🔔</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Search bar — white pill, inside header */}
+          {/* Search bar */}
           <View style={styles.searchWrap}>
             <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
@@ -106,32 +100,56 @@ export default function HomeScreen() {
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Promo banner — overlaps header slightly */}
+        {/* ── BANNER ── */}
         <LinearGradient
           colors={["#0d1a3a", "#1a3a6e"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.banner}
         >
+          {/* Left content */}
           <View style={styles.bannerLeft}>
-            <View style={styles.bannerBadge}>
-              <Text style={styles.bannerBadgeText}>LIMITED OFFER</Text>
+            {/* Steps pills */}
+            <View style={styles.bannerSteps}>
+              <View style={styles.bannerStep}>
+                <Text style={styles.bannerStepNum}>1</Text>
+                <Text style={styles.bannerStepText}>Pick</Text>
+              </View>
+              <View style={styles.bannerStepArrow}>
+                <Text style={styles.bannerArrowText}>›</Text>
+              </View>
+              <View style={styles.bannerStep}>
+                <Text style={styles.bannerStepNum}>2</Text>
+                <Text style={styles.bannerStepText}>Book</Text>
+              </View>
+              <View style={styles.bannerStepArrow}>
+                <Text style={styles.bannerArrowText}>›</Text>
+              </View>
+              <View style={styles.bannerStep}>
+                <Text style={styles.bannerStepNum}>3</Text>
+                <Text style={styles.bannerStepText}>Relax</Text>
+              </View>
             </View>
+
             <Text style={styles.bannerHeadline}>
-              First booking at{"\n"}₹99 only →
+              Book in 60 seconds,{"\n"}we come to you.
             </Text>
-            <Text style={styles.bannerSub}>* Valid for new customers</Text>
+            <Text style={styles.bannerSub}>
+              Available 7 days · All areas covered
+            </Text>
           </View>
-          {/* Decorative right side — placeholder for illustration later */}
+
+          {/* Right emoji */}
           <View style={styles.bannerRight}>
-            <Text style={styles.bannerEmoji}>🔧</Text>
+            <Text style={styles.bannerEmoji}>🏠</Text>
+            <Text style={styles.bannerEmojiSmall}>⚡</Text>
           </View>
         </LinearGradient>
 
         {/* Section title */}
         <Text style={styles.sectionTitle}>Explore all services</Text>
 
-        {/* Service cards grid */}
+        {/* Service cards */}
         {filtered.length > 0 ? (
           <View style={styles.cardsGrid}>
             {filtered.map((service) => (
@@ -156,11 +174,10 @@ export default function HomeScreen() {
           </Text>
         )}
 
-        {/* Bottom padding so content clears the footer */}
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      {/* ── STICKY FOOTER BUTTON ── */}
+      {/* ── FOOTER ── */}
       <View style={styles.footer}>
         <AppButton
           title="Request Service"
@@ -172,13 +189,8 @@ export default function HomeScreen() {
   );
 }
 
-const HEADER_GRADIENT_H = 180; // height of the colored header section
-
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#F4F6FA",
-  },
+  root: { flex: 1, backgroundColor: "#F4F6FA" },
 
   /* ── HEADER ── */
   header: {
@@ -189,16 +201,9 @@ const styles = StyleSheet.create({
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 20,
     marginTop: 8,
-  },
-  logoAndTitle: {
-    alignItems: "center",
-    flexDirection: "row",
-    width: 110,
-    gap: 8,
-    height: 50,
   },
   appName: {
     fontSize: 26,
@@ -213,14 +218,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     letterSpacing: 0.3,
   },
-  logoContainer: {
-    width: 50,
-    height: 50,
-  },
-  logo: {
-    width: 50,
-    height: "100%",
-  },
   bellBtn: {
     width: 40,
     height: 40,
@@ -231,7 +228,7 @@ const styles = StyleSheet.create({
   },
   bellIcon: { fontSize: 18 },
 
-  /* ── SEARCH BAR ── */
+  /* Search */
   searchWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -257,19 +254,14 @@ const styles = StyleSheet.create({
   clearIcon: { fontSize: 12, color: "#9CA3AF" },
 
   /* ── BODY ── */
-  body: {
-    flex: 1,
-    marginTop: -16, // pull body up to overlap header bottom edge
-  },
-  bodyContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: 0,
-  },
+  body: { flex: 1, marginTop: -16 },
+  bodyContent: { paddingHorizontal: Spacing.xl, paddingTop: 0 },
 
-  /* ── PROMO BANNER ── */
+  /* ── BANNER ── */
   banner: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 18,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
     marginBottom: 28,
     marginTop: 8,
     flexDirection: "row",
@@ -282,41 +274,57 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   bannerLeft: { flex: 1 },
-  bannerBadge: {
-    backgroundColor: "#1DB8A0",
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+
+  /* 1 › 2 › 3 steps */
+  bannerSteps: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 2,
+  },
+  bannerStep: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 20,
-    marginBottom: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    gap: 4,
   },
-  bannerBadgeText: {
-    color: "#fff",
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1.5,
+  bannerStepNum: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#1DB8A0",
   },
+  bannerStepText: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.7)",
+  },
+  bannerStepArrow: { paddingHorizontal: 2 },
+  bannerArrowText: { color: "rgba(255,255,255,0.3)", fontSize: 14 },
+
   bannerHeadline: {
     color: "#FFFFFF",
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "800",
-    lineHeight: 28,
+    lineHeight: 26,
     marginBottom: 6,
+    letterSpacing: -0.3,
   },
   bannerSub: {
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(255,255,255,0.45)",
     fontSize: 11,
     fontWeight: "500",
   },
   bannerRight: {
-    width: 80,
-    height: 80,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.07)",
-    borderRadius: 40,
+    width: 72,
+    gap: 4,
   },
-  bannerEmoji: { fontSize: 40 },
+  bannerEmoji: { fontSize: 42 },
+  bannerEmojiSmall: { fontSize: 20 },
 
   /* ── SERVICES ── */
   sectionTitle: {
