@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
   /* Footer */
   footer: {
     padding: Spacing.lg,
-    paddingBottom: 32,
+    paddingBottom: 8,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: "#fff",
@@ -414,5 +414,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: -2 },
     elevation: 4,
+
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 12,
   },
 });

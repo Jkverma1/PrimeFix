@@ -1,5 +1,3 @@
-// app/index.tsx
-
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -13,11 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import AppButton from "../components/AppButton";
-import ServiceCard from "../components/ServiceCard";
-import { Spacing } from "../constants/colors";
-import { SERVICES } from "../constants/services";
-import { ServiceType } from "../types";
+import AppButton from "../../components/AppButton";
+import ServiceCard from "../../components/ServiceCard";
+import { Spacing } from "../../constants/colors";
+import { SERVICES } from "../../constants/services";
+import { ServiceType } from "../../types";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -60,7 +58,6 @@ export default function HomeScreen() {
         style={styles.header}
       >
         <SafeAreaView>
-          {/* Top row */}
           <View style={styles.headerTop}>
             <View>
               <Text style={styles.appName}>PrimeFix</Text>
@@ -70,8 +67,6 @@ export default function HomeScreen() {
               <Text style={styles.bellIcon}>🔔</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Search bar */}
           <View style={styles.searchWrap}>
             <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
@@ -94,7 +89,7 @@ export default function HomeScreen() {
         </SafeAreaView>
       </LinearGradient>
 
-      {/* ── WHITE BODY ── */}
+      {/* ── BODY — NO negative marginTop so banner is always visible ── */}
       <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
@@ -107,9 +102,7 @@ export default function HomeScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.banner}
         >
-          {/* Left content */}
           <View style={styles.bannerLeft}>
-            {/* Steps pills */}
             <View style={styles.bannerSteps}>
               <View style={styles.bannerStep}>
                 <Text style={styles.bannerStepNum}>1</Text>
@@ -130,7 +123,6 @@ export default function HomeScreen() {
                 <Text style={styles.bannerStepText}>Relax</Text>
               </View>
             </View>
-
             <Text style={styles.bannerHeadline}>
               Book in 60 seconds,{"\n"}we come to you.
             </Text>
@@ -138,18 +130,16 @@ export default function HomeScreen() {
               Available 7 days · All areas covered
             </Text>
           </View>
-
-          {/* Right emoji */}
           <View style={styles.bannerRight}>
             <Text style={styles.bannerEmoji}>🏠</Text>
             <Text style={styles.bannerEmojiSmall}>⚡</Text>
           </View>
         </LinearGradient>
 
-        {/* Section title */}
+        {/* ── SECTION TITLE ── */}
         <Text style={styles.sectionTitle}>Explore all services</Text>
 
-        {/* Service cards */}
+        {/* ── SERVICE CARDS ── */}
         {filtered.length > 0 ? (
           <View style={styles.cardsGrid}>
             {filtered.map((service) => (
@@ -192,21 +182,16 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
 
-  /* ── HEADER ── */
-  header: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: 28,
-    paddingTop: 8,
-  },
+  header: { paddingHorizontal: Spacing.xl, paddingBottom: 24, paddingTop: 8 },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 20,
+    marginBottom: 16,
     marginTop: 8,
   },
   appName: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "800",
     color: "#FFFFFF",
     letterSpacing: -0.5,
@@ -216,7 +201,6 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
     fontWeight: "500",
     marginTop: 2,
-    letterSpacing: 0.3,
   },
   bellBtn: {
     width: 40,
@@ -228,16 +212,15 @@ const styles = StyleSheet.create({
   },
   bellIcon: { fontSize: 18 },
 
-  /* Search */
   searchWrap: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
     shadowColor: "#000",
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
@@ -253,17 +236,19 @@ const styles = StyleSheet.create({
   clearBtn: { padding: 4 },
   clearIcon: { fontSize: 12, color: "#9CA3AF" },
 
-  /* ── BODY ── */
-  body: { flex: 1, marginTop: -16 },
-  bodyContent: { paddingHorizontal: Spacing.xl, paddingTop: 0 },
+  // No negative marginTop — banner always starts visible
+  body: { flex: 1, backgroundColor: "#F4F6FA" },
+  bodyContent: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
 
-  /* ── BANNER ── */
   banner: {
     borderRadius: 18,
     paddingVertical: 20,
     paddingHorizontal: 20,
-    marginBottom: 28,
-    marginTop: 8,
+    marginBottom: 24,
     flexDirection: "row",
     alignItems: "center",
     overflow: "hidden",
@@ -274,12 +259,10 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   bannerLeft: { flex: 1 },
-
-  /* 1 › 2 › 3 steps */
   bannerSteps: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 10,
     gap: 2,
   },
   bannerStep: {
@@ -291,11 +274,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     gap: 4,
   },
-  bannerStepNum: {
-    fontSize: 10,
-    fontWeight: "900",
-    color: "#1DB8A0",
-  },
+  bannerStepNum: { fontSize: 10, fontWeight: "900", color: "#1DB8A0" },
   bannerStepText: {
     fontSize: 10,
     fontWeight: "600",
@@ -303,13 +282,12 @@ const styles = StyleSheet.create({
   },
   bannerStepArrow: { paddingHorizontal: 2 },
   bannerArrowText: { color: "rgba(255,255,255,0.3)", fontSize: 14 },
-
   bannerHeadline: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: "800",
-    lineHeight: 26,
-    marginBottom: 6,
+    lineHeight: 25,
+    marginBottom: 5,
     letterSpacing: -0.3,
   },
   bannerSub: {
@@ -320,18 +298,17 @@ const styles = StyleSheet.create({
   bannerRight: {
     alignItems: "center",
     justifyContent: "center",
-    width: 72,
-    gap: 4,
+    width: 64,
+    gap: 2,
   },
-  bannerEmoji: { fontSize: 42 },
-  bannerEmojiSmall: { fontSize: 20 },
+  bannerEmoji: { fontSize: 38 },
+  bannerEmojiSmall: { fontSize: 18 },
 
-  /* ── SERVICES ── */
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700",
     color: "#1A1A2E",
-    marginBottom: 16,
+    marginBottom: 14,
     letterSpacing: -0.2,
   },
   cardsGrid: {
@@ -350,15 +327,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#6B7280",
     fontSize: 13,
-    marginTop: 16,
+    marginTop: 14,
     fontWeight: "500",
   },
   hintBold: { fontWeight: "700", color: "#1A6FD4" },
 
-  /* ── FOOTER ── */
   footer: {
-    padding: Spacing.lg,
-    paddingBottom: 32,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 12,
+    paddingBottom: 8,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#E5E7EB",
