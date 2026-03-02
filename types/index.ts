@@ -8,7 +8,17 @@ export type ServiceType =
   | "cleaner"
   | "ac_repair"
   | "pest_control"
-  | "home_tutor";
+  | "home_tutor"
+  | "home_cleaning"
+  | "bathroom_cleaning"
+  | "ac_service"
+  | "painting"
+  | "appliance_repair"
+  | "interior_design"
+  | "exterior_design"
+  | "architect"
+  | "maintenance"
+  | "app_development";
 
 export interface Service {
   id: ServiceType;
