@@ -1,4 +1,4 @@
-// app/(account)/privacy.tsx
+// app/(d-account)/privacy.tsx
 
 import { CONTACT } from "@/constants/services";
 import { LinearGradient } from "expo-linear-gradient";
@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Spacing } from "../../constants/colors";
+import { Spacing } from "../../../constants/colors";
 
 const SECTIONS = [
   {

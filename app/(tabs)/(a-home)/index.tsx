@@ -11,11 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import AppButton from "../../components/AppButton";
-import ServiceCard from "../../components/ServiceCard";
-import { Spacing } from "../../constants/colors";
-import { SERVICES } from "../../constants/services";
-import { ServiceType } from "../../types";
+import AppButton from "../../../components/AppButton";
+import ServiceCard from "../../../components/ServiceCard";
+import { Spacing } from "../../../constants/colors";
+import { SERVICES } from "../../../constants/services";
+import { ServiceType } from "../../../types";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -63,7 +63,11 @@ export default function HomeScreen() {
               <Text style={styles.appName}>PrimeFix</Text>
               <Text style={styles.appTagline}>Home Services · Done Right</Text>
             </View>
-            <TouchableOpacity style={styles.bellBtn} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={styles.bellBtn}
+              onPress={() => router.push("../../(shared)/notifications")}
+              activeOpacity={0.8}
+            >
               <Text style={styles.bellIcon}>🔔</Text>
             </TouchableOpacity>
           </View>

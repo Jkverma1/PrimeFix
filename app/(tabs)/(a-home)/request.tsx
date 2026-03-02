@@ -14,12 +14,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import AppButton from "../components/AppButton";
-import AppInput from "../components/AppInput";
-import Colors, { Spacing, Typography } from "../constants/colors";
-import { SERVICES } from "../constants/services";
-import { useServiceRequest } from "../hooks/useServiceRequest";
-import { ServiceType } from "../types";
+import AppButton from "../../../components/AppButton";
+import AppInput from "../../../components/AppInput";
+import Colors, { Spacing, Typography } from "../../../constants/colors";
+import { SERVICES } from "../../../constants/services";
+import { useServiceRequest } from "../../../hooks/useServiceRequest";
+import { ServiceType } from "../../../types";
 
 export default function RequestScreen() {
   const router = useRouter();
@@ -414,7 +414,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: -2 },
     elevation: 4,
-
     paddingHorizontal: Spacing.xl,
     paddingTop: 12,
   },

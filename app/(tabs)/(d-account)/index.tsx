@@ -1,4 +1,4 @@
-// app/(account)/index.tsx
+// app/(d-account)/index.tsx
 
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -13,8 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Spacing } from "../../constants/colors";
-import { CONTACT } from "../../constants/services";
+import { Spacing } from "../../../constants/colors";
+import { CONTACT } from "../../../constants/services";
 
 function MenuItem({
   emoji,
@@ -139,13 +139,13 @@ export default function AccountScreen() {
             emoji="📋"
             label="My Bookings"
             sub="View all your service requests"
-            onPress={() => router.push("/(bookings)")}
+            onPress={() => router.push("../(bookings)")}
           />
           <MenuItem
             emoji="🎁"
             label="Refer & Earn"
             sub="Invite friends, earn ₹75 per referral"
-            onPress={() => router.push("/(refer)")}
+            onPress={() => router.push("../(c-refer)")}
             isLast
           />
         </MenuSection>
@@ -179,19 +179,19 @@ export default function AccountScreen() {
             emoji="🔔"
             label="Notifications"
             sub="View your alerts & updates"
-            onPress={() => router.push("/(account)/notifications")}
+            onPress={() => router.push("/(shared)/notifications")}
           />
           <MenuItem
             emoji="🔒"
             label="Privacy Policy"
             sub="How we handle your data"
-            onPress={() => router.push("/(account)/privacy")}
+            onPress={() => router.push("./privacy")}
           />
           <MenuItem
             emoji="🙋"
             label="Help & Support"
             sub="FAQs and contact options"
-            onPress={() => router.push("/(account)/support")}
+            onPress={() => router.push("./support")}
             isLast
           />
         </MenuSection>

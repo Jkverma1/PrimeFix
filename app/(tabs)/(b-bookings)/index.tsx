@@ -12,8 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Spacing } from "../../constants/colors";
-import { SERVICES } from "../../constants/services";
+import { Spacing } from "../../../constants/colors";
+import { SERVICES } from "../../../constants/services";
 
 // ── Mock booking data — replace with real API later ──────────
 const MOCK_BOOKINGS = [
@@ -176,7 +176,7 @@ export default function BookingsScreen() {
         {filtered.length > 0 && (
           <TouchableOpacity
             style={styles.newBookingBtn}
-            onPress={() => router.push("/")}
+            onPress={() => router.push("../(a-home)")}
             activeOpacity={0.8}
           >
             <Text style={styles.newBookingText}>+ Book Another Service</Text>

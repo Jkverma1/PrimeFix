@@ -1,4 +1,4 @@
-// app/(account)/support.tsx
+// app/(d-account)/support.tsx
 
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -13,8 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Spacing } from "../../constants/colors";
-import { CONTACT } from "../../constants/services";
+import { Spacing } from "../../../constants/colors";
+import { CONTACT } from "../../../constants/services";
 
 const FAQS = [
   {

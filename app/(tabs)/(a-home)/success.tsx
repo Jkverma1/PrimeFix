@@ -13,8 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Spacing } from "../constants/colors";
-import { CONTACT, SERVICES } from "../constants/services";
+import { Spacing } from "../../../constants/colors";
+import { CONTACT, SERVICES } from "../../../constants/services";
 
 export default function SuccessScreen() {
   const router = useRouter();

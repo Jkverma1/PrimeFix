@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Spacing } from "../../constants/colors";
+import { Spacing } from "../../../constants/colors";
 
 const REFERRAL_CODE = "PRIMEFIX-JT27";
 
