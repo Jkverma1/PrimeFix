@@ -1,22 +1,37 @@
-// services/api.ts
+import axios from "axios";
+import { useAuthStore } from "../store/AuthStore";
 
-import { ServiceRequestPayload, ServiceRequestResponse } from '../types';
+const API_BASE_URL = "https://api.primefix.app"; 
 
-const API_BASE_URL = 'https://your-api.com/api/v1'; // 🔁 Replace when backend is ready
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-export const serviceApi = {
-  submitRequest: async (payload: ServiceRequestPayload): Promise<ServiceRequestResponse> => {
-    const response = await fetch(`${API_BASE_URL}/requests`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+api.interceptors.request.use(
+  (config) => {
+    const token = useAuthStore.getState().token;
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err?.message ?? 'Something went wrong');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
-    return response.json();
+    return config;
   },
-};
+  (error) => Promise.reject(error),
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Optional: global logout on 401
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
+    }
+
+    return Promise.reject(error);
+  },
+);

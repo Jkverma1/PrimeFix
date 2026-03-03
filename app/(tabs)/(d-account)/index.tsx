@@ -1,4 +1,4 @@
-// app/(d-account)/index.tsx
+// app/(tabs)/(d-account)/index.tsx
 
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -15,6 +15,8 @@ import {
 } from "react-native";
 import { Spacing } from "../../../constants/colors";
 import { CONTACT } from "../../../constants/services";
+import { useAuthStore } from "../../../store/AuthStore";
+import { logoutAllStores } from "@/store";
 
 function MenuItem({
   emoji,
@@ -46,7 +48,7 @@ function MenuItem({
         </Text>
         {sub ? <Text style={styles.menuSub}>{sub}</Text> : null}
       </View>
-      <Text style={styles.menuArrow}>›</Text>
+      <Text style={[styles.menuArrow, danger && { color: "#FCA5A5" }]}>›</Text>
     </TouchableOpacity>
   );
 }
@@ -86,6 +88,18 @@ export default function AccountScreen() {
       Alert.alert("Error", "Could not open mail app."),
     );
 
+  const handleLogout = () => {
+    Alert.alert("Log Out", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log Out",
+        style: "destructive",
+        onPress: () => logoutAllStores(),
+        // _layout.tsx auth guard will auto-redirect to /(auth)
+      },
+    ]);
+  };
+
   return (
     <View style={styles.root}>
       {/* ── HEADER ── */}
@@ -108,7 +122,6 @@ export default function AccountScreen() {
             </View>
           </View>
 
-          {/* Stats — fixed to show Refer not Offers */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statNum}>2</Text>
@@ -150,7 +163,7 @@ export default function AccountScreen() {
           />
         </MenuSection>
 
-        {/* Support — all in-app now */}
+        {/* Support */}
         <MenuSection title="Support">
           <MenuItem
             emoji="💬"
@@ -173,7 +186,7 @@ export default function AccountScreen() {
           />
         </MenuSection>
 
-        {/* Legal — in-app screens */}
+        {/* Legal */}
         <MenuSection title="Legal">
           <MenuItem
             emoji="🔔"
@@ -192,6 +205,18 @@ export default function AccountScreen() {
             label="Help & Support"
             sub="FAQs and contact options"
             onPress={() => router.push("./support")}
+            isLast
+          />
+        </MenuSection>
+
+        {/* Logout */}
+        <MenuSection title="Account">
+          <MenuItem
+            emoji="🚪"
+            label="Log Out"
+            sub="You'll need to verify again"
+            onPress={handleLogout}
+            danger
             isLast
           />
         </MenuSection>
