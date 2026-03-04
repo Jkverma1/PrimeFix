@@ -76,6 +76,14 @@ export const SERVICES: Service[] = [
     startingPrice: 1999,
     comingSoon: false,
   },
+  {
+    id: "ac_service",
+    label: "AC Service",
+    icon: "❄️",
+    description: "AC servicing & gas refill",
+    startingPrice: 399,
+    comingSoon: false,
+  },
 
   // 🔒 Coming Soon (Urban Company–style extensions)
 
@@ -101,14 +109,6 @@ export const SERVICES: Service[] = [
     icon: "🐜",
     description: "Cockroach, termite & rodent control",
     startingPrice: 599,
-    comingSoon: true,
-  },
-  {
-    id: "ac_service",
-    label: "AC Service",
-    icon: "❄️",
-    description: "AC servicing & gas refill",
-    startingPrice: 399,
     comingSoon: true,
   },
   {
