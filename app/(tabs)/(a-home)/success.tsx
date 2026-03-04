@@ -138,7 +138,9 @@ export default function SuccessScreen() {
                 <View style={styles.divider} />
                 <View style={styles.idRow}>
                   <Text style={styles.idLabel}>Booking ID</Text>
-                  <Text style={styles.idValue}>#{requestId}</Text>
+                  <Text style={styles.idValue}>
+                    #{requestId?.slice(0, 8).toUpperCase()}
+                  </Text>
                 </View>
               </>
             ) : null}

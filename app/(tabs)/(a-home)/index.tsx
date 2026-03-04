@@ -12,13 +12,18 @@ import {
   View,
 } from "react-native";
 import AppButton from "../../../components/AppButton";
+import OnboardingModal from "../../../components/OnboardingModal";
 import ServiceCard from "../../../components/ServiceCard";
 import { Spacing } from "../../../constants/colors";
 import { SERVICES } from "../../../constants/services";
+import { useBootstrap } from "../../../hooks/useBootstrap";
+import { useNotificationStore } from "../../../store/NotificationStore";
 import { ServiceType } from "../../../types";
 
 export default function HomeScreen() {
+  useBootstrap();
   const router = useRouter();
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
   const [selectedService, setSelectedService] = useState<ServiceType | null>(
     null,
   );
@@ -50,6 +55,9 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.root}>
+      {/* ── ONBOARDING MODAL — shows once for new users ── */}
+      <OnboardingModal />
+
       {/* ── GRADIENT HEADER ── */}
       <LinearGradient
         colors={["#1DB8A0", "#1A6FD4"]}
@@ -69,6 +77,13 @@ export default function HomeScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.bellIcon}>🔔</Text>
+              {unreadCount > 0 && (
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText}>
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
           <View style={styles.searchWrap}>
@@ -93,7 +108,7 @@ export default function HomeScreen() {
         </SafeAreaView>
       </LinearGradient>
 
-      {/* ── BODY — NO negative marginTop so banner is always visible ── */}
+      {/* ── BODY ── */}
       <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
@@ -108,24 +123,23 @@ export default function HomeScreen() {
         >
           <View style={styles.bannerLeft}>
             <View style={styles.bannerSteps}>
-              <View style={styles.bannerStep}>
-                <Text style={styles.bannerStepNum}>1</Text>
-                <Text style={styles.bannerStepText}>Pick</Text>
-              </View>
-              <View style={styles.bannerStepArrow}>
-                <Text style={styles.bannerArrowText}>›</Text>
-              </View>
-              <View style={styles.bannerStep}>
-                <Text style={styles.bannerStepNum}>2</Text>
-                <Text style={styles.bannerStepText}>Book</Text>
-              </View>
-              <View style={styles.bannerStepArrow}>
-                <Text style={styles.bannerArrowText}>›</Text>
-              </View>
-              <View style={styles.bannerStep}>
-                <Text style={styles.bannerStepNum}>3</Text>
-                <Text style={styles.bannerStepText}>Relax</Text>
-              </View>
+              {[
+                ["1", "Pick"],
+                ["2", "Book"],
+                ["3", "Relax"],
+              ].map(([num, label], i) => (
+                <React.Fragment key={label}>
+                  {i > 0 && (
+                    <View style={styles.bannerStepArrow}>
+                      <Text style={styles.bannerArrowText}>›</Text>
+                    </View>
+                  )}
+                  <View style={styles.bannerStep}>
+                    <Text style={styles.bannerStepNum}>{num}</Text>
+                    <Text style={styles.bannerStepText}>{label}</Text>
+                  </View>
+                </React.Fragment>
+              ))}
             </View>
             <Text style={styles.bannerHeadline}>
               Book in 60 seconds,{"\n"}we come to you.
@@ -140,10 +154,8 @@ export default function HomeScreen() {
           </View>
         </LinearGradient>
 
-        {/* ── SECTION TITLE ── */}
         <Text style={styles.sectionTitle}>Explore all services</Text>
 
-        {/* ── SERVICE CARDS ── */}
         {filtered.length > 0 ? (
           <View style={styles.cardsGrid}>
             {filtered.map((service) => (
@@ -185,7 +197,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
-
   header: { paddingHorizontal: Spacing.xl, paddingBottom: 24, paddingTop: 8 },
   headerTop: {
     flexDirection: "row",
@@ -215,7 +226,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   bellIcon: { fontSize: 18 },
-
+  bellBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "rgba(29,184,160,0.9)",
+  },
+  bellBadgeText: { color: "#fff", fontSize: 9, fontWeight: "900" },
   searchWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -239,15 +264,12 @@ const styles = StyleSheet.create({
   },
   clearBtn: { padding: 4 },
   clearIcon: { fontSize: 12, color: "#9CA3AF" },
-
-  // No negative marginTop — banner always starts visible
   body: { flex: 1, backgroundColor: "#F4F6FA" },
   bodyContent: {
     paddingHorizontal: Spacing.xl,
     paddingTop: 16,
     paddingBottom: 8,
   },
-
   banner: {
     borderRadius: 18,
     paddingVertical: 20,
@@ -307,7 +329,6 @@ const styles = StyleSheet.create({
   },
   bannerEmoji: { fontSize: 38 },
   bannerEmojiSmall: { fontSize: 18 },
-
   sectionTitle: {
     fontSize: 17,
     fontWeight: "700",
@@ -335,7 +356,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   hintBold: { fontWeight: "700", color: "#1A6FD4" },
-
   footer: {
     paddingHorizontal: Spacing.xl,
     paddingTop: 12,

@@ -1,11 +1,12 @@
-// app/(tabs)/refer.tsx
-// Refer & Earn screen
+// app/(tabs)/(c-refer)/index.tsx
 
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Clipboard,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   Share,
@@ -15,8 +16,9 @@ import {
   View,
 } from "react-native";
 import { Spacing } from "../../../constants/colors";
-
-const REFERRAL_CODE = "PRIMEFIX-JT27";
+import { useReferralStore } from "../../../store/ReferralStore";
+import { useUserStore } from "../../../store/UserStore";
+import { useState } from "react";
 
 const HOW_IT_WORKS = [
   {
@@ -36,16 +38,26 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const REFERRALS = [
-  { name: "Rahul S.", status: "completed", earned: 75, date: "Feb 20, 2025" },
-  { name: "Priya M.", status: "pending", earned: 0, date: "Mar 1, 2025" },
-];
-
 export default function ReferScreen() {
+  const { profile } = useUserStore();
+  const { referrals, summary, isLoading, fetchReferrals } = useReferralStore();
   const [copied, setCopied] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const referralCode = profile?.referral_code ?? "Loading...";
+
+  useEffect(() => {
+    fetchReferrals();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchReferrals();
+    setRefreshing(false);
+  };
 
   const handleCopy = () => {
-    Clipboard.setString(REFERRAL_CODE);
+    Clipboard.setString(referralCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -53,23 +65,19 @@ export default function ReferScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Hey! Book home services with PrimeFix and get ₹50 off your first booking. Use my code: ${REFERRAL_CODE}\n\nDownload: https://primefix.netlify.app`,
+        message: `Hey! Book home services with PrimeFix and get ₹50 off your first booking. Use my code: ${referralCode}\n\nDownload: https://primefix.app`,
         title: "PrimeFix — Home Services",
       });
-    } catch (e) {
+    } catch {
       Alert.alert("Error", "Could not open share sheet.");
     }
   };
 
-  const totalEarned = REFERRALS.filter((r) => r.status === "completed").reduce(
-    (s, r) => s + r.earned,
-    0,
-  );
-  const totalReferred = REFERRALS.length;
+  const totalEarned = summary?.total_earned ?? 0;
+  const totalReferred = summary?.total_referrals ?? 0;
 
   return (
     <View style={styles.root}>
-      {/* ── HEADER ── */}
       <LinearGradient
         colors={["#1DB8A0", "#1A6FD4"]}
         start={{ x: 0, y: 0 }}
@@ -84,8 +92,6 @@ export default function ReferScreen() {
             </View>
             <Text style={styles.headerEmoji}>🎉</Text>
           </View>
-
-          {/* Stats row inside header */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statNum}>₹{totalEarned}</Text>
@@ -109,16 +115,24 @@ export default function ReferScreen() {
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#1DB8A0"
+          />
+        }
       >
-        {/* ── REFERRAL CODE CARD ── */}
+        {/* Code card */}
         <View style={styles.codeCard}>
           <Text style={styles.codeCardTitle}>Your Referral Code</Text>
           <Text style={styles.codeCardSub}>
             Share this code with friends to earn rewards
           </Text>
-
           <View style={styles.codeBox}>
-            <Text style={styles.codeText}>{REFERRAL_CODE}</Text>
+            <Text style={styles.codeText}>
+              {isLoading && !profile ? "..." : referralCode}
+            </Text>
             <TouchableOpacity
               style={[styles.copyBtn, copied && styles.copyBtnDone]}
               onPress={handleCopy}
@@ -129,8 +143,6 @@ export default function ReferScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Share button */}
           <TouchableOpacity
             style={styles.shareBtn}
             onPress={handleShare}
@@ -147,7 +159,7 @@ export default function ReferScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── HOW IT WORKS ── */}
+        {/* How it works */}
         <Text style={styles.sectionTitle}>How it works</Text>
         <View style={styles.howCard}>
           {HOW_IT_WORKS.map((step, i) => (
@@ -159,16 +171,19 @@ export default function ReferScreen() {
                 <Text style={styles.howTitle}>{step.title}</Text>
                 <Text style={styles.howDesc}>{step.desc}</Text>
               </View>
-              {/* Connector line */}
               {i < HOW_IT_WORKS.length - 1 && <View style={styles.connector} />}
             </View>
           ))}
         </View>
 
-        {/* ── YOUR REFERRALS ── */}
+        {/* Referrals list */}
         <Text style={styles.sectionTitle}>Your referrals</Text>
 
-        {REFERRALS.length === 0 ? (
+        {isLoading && referrals.length === 0 ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator color="#1DB8A0" />
+          </View>
+        ) : referrals.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyEmoji}>👥</Text>
             <Text style={styles.emptyText}>
@@ -177,39 +192,59 @@ export default function ReferScreen() {
           </View>
         ) : (
           <View style={styles.referralsList}>
-            {REFERRALS.map((ref, i) => (
-              <View key={i} style={styles.referralRow}>
-                <View style={styles.referralAvatar}>
-                  <Text style={styles.referralAvatarText}>
-                    {ref.name.charAt(0)}
-                  </Text>
+            {referrals.map((ref, i) => {
+              const phone = ref.profiles?.phone ?? "Unknown";
+              const initial = phone.slice(-4, -3) ?? "?";
+              const isLast = i === referrals.length - 1;
+              const date = new Date(ref.created_at).toLocaleDateString(
+                "en-IN",
+                {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                },
+              );
+              return (
+                <View
+                  key={ref.id}
+                  style={[
+                    styles.referralRow,
+                    isLast && { borderBottomWidth: 0 },
+                  ]}
+                >
+                  <View style={styles.referralAvatar}>
+                    <Text style={styles.referralAvatarText}>{initial}</Text>
+                  </View>
+                  <View style={styles.referralInfo}>
+                    <Text style={styles.referralName}>
+                      +91 ****{phone.slice(-4)}
+                    </Text>
+                    <Text style={styles.referralDate}>{date}</Text>
+                  </View>
+                  <View style={styles.referralRight}>
+                    {ref.status === "earned" || ref.status === "paid" ? (
+                      <Text style={styles.referralEarned}>
+                        +₹{ref.reward_amount}
+                      </Text>
+                    ) : (
+                      <View style={styles.pendingBadge}>
+                        <Text style={styles.pendingText}>Pending</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                <View style={styles.referralInfo}>
-                  <Text style={styles.referralName}>{ref.name}</Text>
-                  <Text style={styles.referralDate}>{ref.date}</Text>
-                </View>
-                <View style={styles.referralRight}>
-                  {ref.status === "completed" ? (
-                    <Text style={styles.referralEarned}>+₹{ref.earned}</Text>
-                  ) : (
-                    <View style={styles.pendingBadge}>
-                      <Text style={styles.pendingText}>Pending</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
 
-        {/* ── TERMS ── */}
+        {/* Terms */}
         <View style={styles.termsCard}>
           <Text style={styles.termsTitle}>Terms & Conditions</Text>
           <Text style={styles.termsText}>
-            • Referral credit is applied after the referred friend completes
-            their first booking.{"\n"}• Credits can be used on any future
-            booking.{"\n"}• Maximum 10 referrals per account per month.{"\n"}•
-            PrimeFix reserves the right to modify this program at any time.
+            {
+              "• Referral credit is applied after the referred friend completes their first booking.\n• Credits can be used on any future booking.\n• Maximum 10 referrals per account per month.\n• PrimeFix reserves the right to modify this program at any time."
+            }
           </Text>
         </View>
 
@@ -221,8 +256,6 @@ export default function ReferScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
-
-  /* Header */
   header: { paddingHorizontal: Spacing.xl, paddingBottom: 24, paddingTop: 8 },
   headerRow: {
     flexDirection: "row",
@@ -244,7 +277,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   headerEmoji: { fontSize: 36 },
-
   statsRow: {
     flexDirection: "row",
     backgroundColor: "rgba(255,255,255,0.15)",
@@ -261,12 +293,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   statDivider: { width: 1, backgroundColor: "rgba(255,255,255,0.2)" },
-
-  /* Body */
   body: { flex: 1 },
   bodyContent: { padding: Spacing.xl },
-
-  /* Code card */
   codeCard: {
     backgroundColor: "#fff",
     borderRadius: 20,
@@ -292,7 +320,6 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     lineHeight: 18,
   },
-
   codeBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -321,12 +348,9 @@ const styles = StyleSheet.create({
   },
   copyBtnDone: { backgroundColor: "#10B981" },
   copyBtnText: { color: "#fff", fontSize: 13, fontWeight: "800" },
-
   shareBtn: { borderRadius: 14, overflow: "hidden" },
   shareBtnGrad: { paddingVertical: 16, alignItems: "center" },
   shareBtnText: { color: "#fff", fontSize: 16, fontWeight: "800" },
-
-  /* Section titles */
   sectionTitle: {
     fontSize: 17,
     fontWeight: "700",
@@ -334,8 +358,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     letterSpacing: -0.2,
   },
-
-  /* How it works */
   howCard: {
     backgroundColor: "#fff",
     borderRadius: 20,
@@ -386,8 +408,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
     borderRadius: 1,
   },
-
-  /* Referrals list */
+  loadingWrap: { paddingVertical: 32, alignItems: "center" },
   referralsList: {
     backgroundColor: "#fff",
     borderRadius: 20,
@@ -411,7 +432,6 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    background: "linear-gradient(135deg, #1DB8A0, #1A6FD4)",
     backgroundColor: "#1DB8A0",
     alignItems: "center",
     justifyContent: "center",
@@ -434,8 +454,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   pendingText: { fontSize: 11, fontWeight: "700", color: "#F59E0B" },
-
-  /* Empty state */
   emptyCard: {
     backgroundColor: "#fff",
     borderRadius: 20,
@@ -451,8 +469,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     lineHeight: 20,
   },
-
-  /* Terms */
   termsCard: {
     backgroundColor: "#fff",
     borderRadius: 16,

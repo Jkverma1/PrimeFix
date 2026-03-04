@@ -16,7 +16,9 @@ import {
 import { Spacing } from "../../../constants/colors";
 import { CONTACT } from "../../../constants/services";
 import { useAuthStore } from "../../../store/AuthStore";
-import { logoutAllStores } from "@/store";
+import { useBookingStore } from "../../../store/BookingStore";
+import { useReferralStore } from "../../../store/ReferralStore";
+import { useUserStore } from "../../../store/UserStore";
 
 function MenuItem({
   emoji,
@@ -70,6 +72,15 @@ function MenuSection({
 
 export default function AccountScreen() {
   const router = useRouter();
+  const logout = useAuthStore((s) => s.logout);
+  const { profile } = useUserStore();
+  const { bookings } = useBookingStore();
+  const { summary } = useReferralStore();
+
+  const completedCount = bookings.filter(
+    (b) => b.status === "completed",
+  ).length;
+  const totalEarned = summary?.total_earned ?? 0;
 
   const handleCall = () =>
     Linking.openURL(`tel:${CONTACT.phone}`).catch(() =>
@@ -91,18 +102,17 @@ export default function AccountScreen() {
   const handleLogout = () => {
     Alert.alert("Log Out", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: () => logoutAllStores(),
-        // _layout.tsx auth guard will auto-redirect to /(auth)
-      },
+      { text: "Log Out", style: "destructive", onPress: () => logout() },
     ]);
   };
 
+  const displayName = profile?.full_name ?? "Welcome!";
+  const displayPhone = profile?.phone
+    ? `+91 ${profile.phone.replace("+91", "").slice(-10)}`
+    : "Manage your account & bookings";
+
   return (
     <View style={styles.root}>
-      {/* ── HEADER ── */}
       <LinearGradient
         colors={["#1DB8A0", "#1A6FD4"]}
         start={{ x: 0, y: 0 }}
@@ -110,31 +120,43 @@ export default function AccountScreen() {
         style={styles.header}
       >
         <SafeAreaView>
-          <View style={styles.profileRow}>
+          {/* Profile row — tappable to edit profile */}
+          <TouchableOpacity
+            style={styles.profileRow}
+            onPress={() => router.push("./profile")}
+            activeOpacity={0.8}
+          >
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>👤</Text>
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>Welcome!</Text>
-              <Text style={styles.profileSub}>
-                Manage your account & bookings
+              <Text style={styles.avatarText}>
+                {profile?.full_name
+                  ? profile.full_name.charAt(0).toUpperCase()
+                  : "👤"}
               </Text>
             </View>
-          </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{displayName}</Text>
+              <Text style={styles.profileSub}>{displayPhone}</Text>
+            </View>
+            <View style={styles.editBadge}>
+              <Text style={styles.editBadgeText}>Edit ›</Text>
+            </View>
+          </TouchableOpacity>
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statNum}>2</Text>
+              <Text style={styles.statNum}>{bookings.length}</Text>
               <Text style={styles.statLabel}>Bookings</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNum}>1</Text>
+              <Text style={styles.statNum}>{completedCount}</Text>
               <Text style={styles.statLabel}>Completed</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNum}>₹75</Text>
+              <Text style={styles.statNum}>
+                ₹{totalEarned > 0 ? totalEarned : 75}
+              </Text>
               <Text style={styles.statLabel}>Refer Reward</Text>
             </View>
           </View>
@@ -146,13 +168,18 @@ export default function AccountScreen() {
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* My Activity */}
         <MenuSection title="My Activity">
           <MenuItem
             emoji="📋"
             label="My Bookings"
             sub="View all your service requests"
             onPress={() => router.push("../(bookings)")}
+          />
+          <MenuItem
+            emoji="🗺️"
+            label="Saved Addresses"
+            sub="Manage your saved locations"
+            onPress={() => router.push("./addresses")}
           />
           <MenuItem
             emoji="🎁"
@@ -163,7 +190,16 @@ export default function AccountScreen() {
           />
         </MenuSection>
 
-        {/* Support */}
+        <MenuSection title="Account">
+          <MenuItem
+            emoji="👤"
+            label="Edit Profile"
+            sub="Update your name and details"
+            onPress={() => router.push("./profile")}
+            isLast
+          />
+        </MenuSection>
+
         <MenuSection title="Support">
           <MenuItem
             emoji="💬"
@@ -186,7 +222,6 @@ export default function AccountScreen() {
           />
         </MenuSection>
 
-        {/* Legal */}
         <MenuSection title="Legal">
           <MenuItem
             emoji="🔔"
@@ -209,19 +244,17 @@ export default function AccountScreen() {
           />
         </MenuSection>
 
-        {/* Logout */}
-        <MenuSection title="Account">
+        <MenuSection title="Session">
           <MenuItem
             emoji="🚪"
             label="Log Out"
-            sub="You'll need to verify again"
+            sub="You'll need to verify your number again"
             onPress={handleLogout}
             danger
             isLast
           />
         </MenuSection>
 
-        {/* App info */}
         <View style={styles.appInfo}>
           <LinearGradient
             colors={["#1DB8A0", "#1A6FD4"]}
@@ -248,7 +281,6 @@ export default function AccountScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
-
   header: { paddingHorizontal: Spacing.xl, paddingBottom: 24, paddingTop: 8 },
   profileRow: {
     flexDirection: "row",
@@ -267,7 +299,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.4)",
   },
-  avatarText: { fontSize: 28 },
+  avatarText: { fontSize: 24, fontWeight: "800", color: "#fff" },
   profileInfo: { flex: 1 },
   profileName: {
     fontSize: 22,
@@ -281,7 +313,13 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginTop: 2,
   },
-
+  editBadge: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  editBadgeText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   statsRow: {
     flexDirection: "row",
     backgroundColor: "rgba(255,255,255,0.15)",
@@ -298,10 +336,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   statDivider: { width: 1, backgroundColor: "rgba(255,255,255,0.2)" },
-
   body: { flex: 1 },
   bodyContent: { padding: Spacing.xl },
-
   section: { marginBottom: 20 },
   sectionTitle: {
     fontSize: 11,
@@ -322,7 +358,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -352,7 +387,6 @@ const styles = StyleSheet.create({
   menuLabelDanger: { color: "#EF4444" },
   menuSub: { fontSize: 12, color: "#9CA3AF", fontWeight: "500", marginTop: 2 },
   menuArrow: { fontSize: 20, color: "#D1D5DB" },
-
   appInfo: {
     flexDirection: "row",
     alignItems: "center",

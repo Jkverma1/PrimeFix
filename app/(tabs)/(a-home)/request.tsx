@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -19,11 +20,19 @@ import AppInput from "../../../components/AppInput";
 import Colors, { Spacing, Typography } from "../../../constants/colors";
 import { SERVICES } from "../../../constants/services";
 import { useServiceRequest } from "../../../hooks/useServiceRequest";
+import { useUserStore } from "../../../store/UserStore";
 import { ServiceType } from "../../../types";
+
+const LABEL_EMOJIS: Record<string, string> = {
+  Home: "🏠",
+  Office: "🏢",
+  Other: "📍",
+};
 
 export default function RequestScreen() {
   const router = useRouter();
   const { serviceType } = useLocalSearchParams<{ serviceType: ServiceType }>();
+  const { addresses } = useUserStore();
 
   const service = SERVICES.find((s) => s.id === serviceType);
   const serviceName = service?.label ?? serviceType;
@@ -37,7 +46,35 @@ export default function RequestScreen() {
   const [issue, setIssue] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Address picker state
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null,
+  );
+
   const { submit, isLoading, error: submitError } = useServiceRequest();
+
+  // Pre-fill with default address on mount
+  React.useEffect(() => {
+    const defaultAddr = addresses.find((a) => a.is_default);
+    if (defaultAddr && !address) {
+      setAddress(defaultAddr.address);
+      setSelectedAddressId(defaultAddr.id);
+    }
+  }, [addresses]);
+
+  const handleSelectAddress = (saved: { id: string; address: string }) => {
+    setAddress(saved.address);
+    setSelectedAddressId(saved.id);
+    setShowAddressPicker(false);
+    // Clear address error if any
+    setErrors((e) => ({ ...e, address: "" }));
+  };
+
+  const handleManualAddressChange = (text: string) => {
+    setAddress(text);
+    setSelectedAddressId(null); // detach from saved address
+  };
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -68,9 +105,11 @@ export default function RequestScreen() {
     }
   };
 
+  const selectedSaved = addresses.find((a) => a.id === selectedAddressId);
+
   return (
     <View style={styles.root}>
-      {/* ── GRADIENT HEADER ── */}
+      {/* ── HEADER ── */}
       <LinearGradient
         colors={["#1DB8A0", "#1A6FD4"]}
         start={{ x: 0, y: 0 }}
@@ -78,7 +117,6 @@ export default function RequestScreen() {
         style={styles.header}
       >
         <SafeAreaView>
-          {/* Back button row */}
           <TouchableOpacity
             style={styles.backBtn}
             onPress={() => router.back()}
@@ -87,8 +125,6 @@ export default function RequestScreen() {
             <Text style={styles.backArrow}>←</Text>
             <Text style={styles.backText}>Services</Text>
           </TouchableOpacity>
-
-          {/* Service info row */}
           <View style={styles.serviceRow}>
             <View style={styles.serviceIconWrap}>
               <Text style={styles.serviceIcon}>{serviceIcon}</Text>
@@ -97,7 +133,6 @@ export default function RequestScreen() {
               <Text style={styles.serviceTitle}>{serviceName} Request</Text>
               <Text style={styles.serviceDesc}>{serviceDesc}</Text>
             </View>
-            {/* Price badge */}
             <View style={styles.priceBadge}>
               <Text style={styles.priceFrom}>from</Text>
               <Text style={styles.priceAmt}>₹{servicePrice}</Text>
@@ -106,7 +141,7 @@ export default function RequestScreen() {
         </SafeAreaView>
       </LinearGradient>
 
-      {/* ── FORM BODY ── */}
+      {/* ── FORM ── */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
@@ -117,30 +152,35 @@ export default function RequestScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Steps indicator */}
+          {/* Steps */}
           <View style={styles.stepsRow}>
-            <View style={styles.step}>
-              <View style={styles.stepDot}>
-                <Text style={styles.stepNum}>1</Text>
-              </View>
-              <Text style={styles.stepLabel}>Service</Text>
-            </View>
-            <View style={styles.stepLine} />
-            <View style={styles.step}>
-              <View style={styles.stepDot}>
-                <Text style={styles.stepNum}>2</Text>
-              </View>
-              <Text style={styles.stepLabel}>Details</Text>
-            </View>
-            <View style={styles.stepLine} />
-            <View style={styles.step}>
-              <View style={[styles.stepDot, styles.stepDotInactive]}>
-                <Text style={[styles.stepNum, styles.stepNumInactive]}>3</Text>
-              </View>
-              <Text style={[styles.stepLabel, styles.stepLabelInactive]}>
-                Submit
-              </Text>
-            </View>
+            {["Service", "Details", "Submit"].map((step, i) => (
+              <React.Fragment key={step}>
+                <View style={styles.step}>
+                  <View
+                    style={[styles.stepDot, i === 2 && styles.stepDotInactive]}
+                  >
+                    <Text
+                      style={[
+                        styles.stepNum,
+                        i === 2 && styles.stepNumInactive,
+                      ]}
+                    >
+                      {i + 1}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepLabel,
+                      i === 2 && styles.stepLabelInactive,
+                    ]}
+                  >
+                    {step}
+                  </Text>
+                </View>
+                {i < 2 && <View style={styles.stepLine} />}
+              </React.Fragment>
+            ))}
           </View>
 
           {submitError ? (
@@ -171,14 +211,55 @@ export default function RequestScreen() {
               keyboardType="phone-pad"
               maxLength={10}
             />
-            <AppInput
-              label="Address"
-              placeholder="House no., street, area, city"
-              value={address}
-              onChangeText={setAddress}
-              error={errors.address}
-              autoCapitalize="sentences"
-            />
+
+            {/* ── ADDRESS FIELD with saved picker ── */}
+            <View style={styles.addressSection}>
+              <View style={styles.addressLabelRow}>
+                <Text style={styles.addressFieldLabel}>Address</Text>
+                {addresses.length > 0 && (
+                  <TouchableOpacity
+                    style={styles.savedAddressBtn}
+                    onPress={() => setShowAddressPicker(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.savedAddressBtnText}>
+                      📍 {selectedSaved ? selectedSaved.label : "Use Saved"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Show selected saved address chip */}
+              {selectedSaved && (
+                <View style={styles.selectedChip}>
+                  <Text style={styles.selectedChipEmoji}>
+                    {LABEL_EMOJIS[selectedSaved.label] ?? "📍"}
+                  </Text>
+                  <Text style={styles.selectedChipText} numberOfLines={1}>
+                    {selectedSaved.label} — {selectedSaved.address}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedAddressId(null);
+                      setAddress("");
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={styles.selectedChipClose}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <AppInput
+                label=""
+                placeholder="House no., street, area, city"
+                value={address}
+                onChangeText={handleManualAddressChange}
+                error={errors.address}
+                autoCapitalize="sentences"
+              />
+            </View>
+
             <AppInput
               label="Describe the Issue"
               placeholder="E.g. leaking pipe under kitchen sink..."
@@ -193,20 +274,19 @@ export default function RequestScreen() {
 
           {/* Trust badges */}
           <View style={styles.trustRow}>
-            <View style={styles.trustItem}>
-              <Text style={styles.trustIcon}>✓</Text>
-              <Text style={styles.trustText}>Verified Pros</Text>
-            </View>
-            <View style={styles.trustDot} />
-            <View style={styles.trustItem}>
-              <Text style={styles.trustIcon}>🛡</Text>
-              <Text style={styles.trustText}>Insured Work</Text>
-            </View>
-            <View style={styles.trustDot} />
-            <View style={styles.trustItem}>
-              <Text style={styles.trustIcon}>⚡</Text>
-              <Text style={styles.trustText}>Fast Response</Text>
-            </View>
+            {[
+              ["✓", "Verified Pros"],
+              ["🛡", "Insured Work"],
+              ["⚡", "Fast Response"],
+            ].map(([icon, text], i) => (
+              <React.Fragment key={text}>
+                {i > 0 && <View style={styles.trustDot} />}
+                <View style={styles.trustItem}>
+                  <Text style={styles.trustIcon}>{icon}</Text>
+                  <Text style={styles.trustText}>{text}</Text>
+                </View>
+              </React.Fragment>
+            ))}
           </View>
 
           <View style={{ height: 16 }} />
@@ -221,6 +301,78 @@ export default function RequestScreen() {
           loading={isLoading}
         />
       </View>
+
+      {/* ── SAVED ADDRESS PICKER MODAL ── */}
+      <Modal
+        visible={showAddressPicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowAddressPicker(false)}
+      >
+        <View style={styles.modal}>
+          <View style={styles.modalHandle} />
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Choose an Address</Text>
+            <TouchableOpacity
+              onPress={() => setShowAddressPicker(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalClose}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.modalBody}>
+            {addresses.map((a) => (
+              <TouchableOpacity
+                key={a.id}
+                style={[
+                  styles.addressOption,
+                  selectedAddressId === a.id && styles.addressOptionSelected,
+                ]}
+                onPress={() => handleSelectAddress(a)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.addressOptionIcon}>
+                  <Text style={{ fontSize: 20 }}>
+                    {LABEL_EMOJIS[a.label] ?? "📍"}
+                  </Text>
+                </View>
+                <View style={styles.addressOptionInfo}>
+                  <View style={styles.addressOptionLabelRow}>
+                    <Text style={styles.addressOptionLabel}>{a.label}</Text>
+                    {a.is_default && (
+                      <View style={styles.defaultBadge}>
+                        <Text style={styles.defaultBadgeText}>Default</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.addressOptionText} numberOfLines={2}>
+                    {a.address}
+                  </Text>
+                </View>
+                {selectedAddressId === a.id && (
+                  <Text style={styles.addressOptionCheck}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+
+            {/* Option to enter manually */}
+            <TouchableOpacity
+              style={styles.addressOptionManual}
+              onPress={() => {
+                setSelectedAddressId(null);
+                setAddress("");
+                setShowAddressPicker(false);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.addressOptionManualText}>
+                ✏️ Enter a new address manually
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -228,12 +380,8 @@ export default function RequestScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
 
-  /* ── HEADER ── */
-  header: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: 24,
-    paddingTop: 8,
-  },
+  /* Header */
+  header: { paddingHorizontal: Spacing.xl, paddingBottom: 24, paddingTop: 8 },
   backBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -248,12 +396,7 @@ const styles = StyleSheet.create({
   },
   backArrow: { color: "#fff", fontSize: 16, fontWeight: "700" },
   backText: { color: "#fff", fontSize: 13, fontWeight: "600" },
-
-  serviceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
+  serviceRow: { flexDirection: "row", alignItems: "center", gap: 14 },
   serviceIconWrap: {
     width: 52,
     height: 52,
@@ -297,7 +440,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
 
-  /* ── BODY ── */
+  /* Body */
   body: { flex: 1, marginTop: -12 },
   scroll: { paddingHorizontal: Spacing.xl, paddingTop: 0 },
 
@@ -316,7 +459,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  step: { alignItems: "center", gap: 4, justifyContent: "center" },
+  step: { alignItems: "center", gap: 4 },
   stepDot: {
     width: 28,
     height: 28,
@@ -340,7 +483,6 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: "#F0F2F8",
     marginHorizontal: 6,
-    // keep the line vertically centered with the dots/labels
     alignSelf: "center",
   },
 
@@ -370,13 +512,49 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     lineHeight: 17,
   },
-  textarea: {
-    height: 100,
-    textAlignVertical: "top",
-    paddingTop: Spacing.md,
-  },
+  textarea: { height: 100, textAlignVertical: "top", paddingTop: Spacing.md },
 
-  /* Trust badges */
+  /* Address field */
+  addressSection: { marginBottom: 4 },
+  addressLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  addressFieldLabel: { fontSize: 13, fontWeight: "700", color: "#374151" },
+  savedAddressBtn: {
+    backgroundColor: "#F0FBF8",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: "rgba(29,184,160,0.3)",
+  },
+  savedAddressBtnText: { fontSize: 12, fontWeight: "700", color: "#1DB8A0" },
+
+  selectedChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0FBF8",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "rgba(29,184,160,0.25)",
+  },
+  selectedChipEmoji: { fontSize: 16 },
+  selectedChipText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#0B0F1A",
+    fontWeight: "600",
+  },
+  selectedChipClose: { fontSize: 12, color: "#9CA3AF", fontWeight: "700" },
+
+  /* Trust */
   trustRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -416,5 +594,90 @@ const styles = StyleSheet.create({
     elevation: 4,
     paddingHorizontal: Spacing.xl,
     paddingTop: 12,
+  },
+
+  /* Address picker modal */
+  modal: { flex: 1, backgroundColor: "#fff" },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#E5E7EB",
+    alignSelf: "center",
+    marginTop: 12,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+  modalTitle: { fontSize: 18, fontWeight: "800", color: "#0B0F1A" },
+  modalClose: { fontSize: 18, color: "#9CA3AF", fontWeight: "700" },
+  modalBody: { padding: Spacing.xl, gap: 10 },
+
+  addressOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: "#F8F9FB",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
+  addressOptionSelected: { backgroundColor: "#F0FBF8", borderColor: "#1DB8A0" },
+  addressOptionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  addressOptionInfo: { flex: 1 },
+  addressOptionLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 3,
+  },
+  addressOptionLabel: { fontSize: 15, fontWeight: "800", color: "#0B0F1A" },
+  defaultBadge: {
+    backgroundColor: "#F0FBF8",
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  defaultBadgeText: { fontSize: 10, color: "#1DB8A0", fontWeight: "700" },
+  addressOptionText: {
+    fontSize: 13,
+    color: "#6B7280",
+    fontWeight: "500",
+    lineHeight: 18,
+  },
+  addressOptionCheck: { fontSize: 18, color: "#1DB8A0", fontWeight: "900" },
+
+  addressOptionManual: {
+    paddingVertical: 16,
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "#D1D5DB",
+    marginTop: 4,
+  },
+  addressOptionManualText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#6B7280",
   },
 });

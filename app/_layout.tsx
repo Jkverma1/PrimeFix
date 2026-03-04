@@ -1,5 +1,3 @@
-// app/_layout.tsx
-
 import {
   Stack,
   useNavigationContainerRef,
@@ -15,31 +13,32 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
-  const { isLoggedIn } = useAuthStore();
-  const [isNavigationReady, setIsNavigationReady] = useState(false);
+  const { isLoggedIn, init } = useAuthStore();
+  const [isReady, setIsReady] = useState(false);
   const rootNavRef = useNavigationContainerRef();
 
   useEffect(() => {
     async function prepare() {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1200));
+        await init();
+        await new Promise((resolve) => setTimeout(resolve, 800));
       } catch (e) {
         console.warn(e);
       } finally {
         await SplashScreen.hideAsync();
+        setIsReady(true);
       }
     }
     prepare();
   }, []);
 
+  const [navReady, setNavReady] = useState(false);
   useEffect(() => {
-    if (rootNavRef?.isReady()) {
-      setIsNavigationReady(true);
-    }
+    if (rootNavRef?.isReady()) setNavReady(true);
   }, [rootNavRef?.isReady()]);
 
   useEffect(() => {
-    if (!isNavigationReady) return;
+    if (!isReady || !navReady) return;
 
     const inAuthGroup = segments[0] === "(auth)";
 
@@ -48,7 +47,9 @@ export default function RootLayout() {
     } else if (isLoggedIn && inAuthGroup) {
       router.replace("/(tabs)/(a-home)");
     }
-  }, [isLoggedIn, segments, isNavigationReady]);
+  }, [isLoggedIn, segments, isReady, navReady]);
+
+  if (!isReady) return null;
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

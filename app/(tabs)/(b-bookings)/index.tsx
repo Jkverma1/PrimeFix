@@ -1,10 +1,11 @@
-// app/(tabs)/bookings.tsx
-// My Bookings — shows booking history, empty state for new users
+// app/(tabs)/(bookings)/index.tsx
 
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -14,26 +15,7 @@ import {
 } from "react-native";
 import { Spacing } from "../../../constants/colors";
 import { SERVICES } from "../../../constants/services";
-
-// ── Mock booking data — replace with real API later ──────────
-const MOCK_BOOKINGS = [
-  {
-    id: "PF-2024-001",
-    serviceId: "plumber",
-    status: "completed",
-    date: "Feb 24, 2025",
-    price: 349,
-    address: "Block 4, Sector 12, Delhi",
-  },
-  {
-    id: "PF-2024-002",
-    serviceId: "electrician",
-    status: "pending",
-    date: "Mar 2, 2025",
-    price: 249,
-    address: "123 MG Road, Bangalore",
-  },
-];
+import { useBookingStore } from "../../../store/BookingStore";
 
 const STATUS_CONFIG: Record<
   string,
@@ -41,20 +23,36 @@ const STATUS_CONFIG: Record<
 > = {
   pending: { label: "Pending", color: "#F59E0B", bg: "#FFF7ED" },
   confirmed: { label: "Confirmed", color: "#1DB8A0", bg: "#F0FBF8" },
+  in_progress: { label: "In Progress", color: "#8B5CF6", bg: "#F5F3FF" },
   completed: { label: "Completed", color: "#1A6FD4", bg: "#EEF4FF" },
   cancelled: { label: "Cancelled", color: "#EF4444", bg: "#FEF2F2" },
 };
 
-type FilterType = "all" | "pending" | "completed";
+type FilterType = "all" | "pending" | "completed" | "cancelled";
 
 export default function BookingsScreen() {
   const router = useRouter();
+  const { bookings, isLoading, fetchBookings, cancelBooking } =
+    useBookingStore();
   const [filter, setFilter] = useState<FilterType>("all");
+  const [refreshing, setRefreshing] = useState(false);
 
   const filtered =
-    filter === "all"
-      ? MOCK_BOOKINGS
-      : MOCK_BOOKINGS.filter((b) => b.status === filter);
+    filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchBookings(true); // force refresh
+    setRefreshing(false);
+  }, []);
+
+  const handleCancel = async (id: string) => {
+    try {
+      await cancelBooking(id);
+    } catch {
+      // error already in store
+    }
+  };
 
   return (
     <View style={styles.root}>
@@ -74,7 +72,7 @@ export default function BookingsScreen() {
               </Text>
             </View>
             <View style={styles.countBadge}>
-              <Text style={styles.countNum}>{MOCK_BOOKINGS.length}</Text>
+              <Text style={styles.countNum}>{bookings.length}</Text>
               <Text style={styles.countLabel}>Total</Text>
             </View>
           </View>
@@ -83,108 +81,161 @@ export default function BookingsScreen() {
 
       {/* ── FILTER PILLS ── */}
       <View style={styles.filterWrap}>
-        {(["all", "pending", "completed"] as FilterType[]).map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filterPill, filter === f && styles.filterPillActive]}
-            onPress={() => setFilter(f)}
-            activeOpacity={0.7}
-          >
-            <Text
+        {(["all", "pending", "completed", "cancelled"] as FilterType[]).map(
+          (f) => (
+            <TouchableOpacity
+              key={f}
               style={[
-                styles.filterText,
-                filter === f && styles.filterTextActive,
+                styles.filterPill,
+                filter === f && styles.filterPillActive,
               ]}
+              onPress={() => setFilter(f)}
+              activeOpacity={0.7}
             >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.filterText,
+                  filter === f && styles.filterTextActive,
+                ]}
+              >
+                {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ),
+        )}
       </View>
 
-      <ScrollView
-        style={styles.body}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {filtered.length === 0 ? (
-          /* ── EMPTY STATE ── */
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyEmoji}>📋</Text>
-            <Text style={styles.emptyTitle}>No bookings yet</Text>
-            <Text style={styles.emptySub}>
-              Your service requests will appear here once you book.
-            </Text>
+      {isLoading && bookings.length === 0 ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#1DB8A0" />
+          <Text style={styles.loadingText}>Loading bookings...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.body}
+          contentContainerStyle={styles.bodyContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#1DB8A0"
+            />
+          }
+        >
+          {filtered.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Text style={styles.emptyEmoji}>📋</Text>
+              <Text style={styles.emptyTitle}>
+                {filter === "all" ? "No bookings yet" : `No ${filter} bookings`}
+              </Text>
+              <Text style={styles.emptySub}>
+                {filter === "all"
+                  ? "Your service requests will appear here once you book."
+                  : "Try a different filter to see other bookings."}
+              </Text>
+              {filter === "all" && (
+                <TouchableOpacity
+                  style={styles.emptyBtn}
+                  onPress={() => router.push("../(a-home)")}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.emptyBtnText}>Book a Service</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            filtered.map((booking) => {
+              const service = SERVICES.find(
+                (s) => s.id === booking.services?.slug,
+              );
+              const status =
+                STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending;
+              const date = new Date(booking.created_at).toLocaleDateString(
+                "en-IN",
+                {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                },
+              );
+
+              return (
+                <View key={booking.id} style={styles.card}>
+                  <View style={styles.cardTop}>
+                    <View style={styles.cardIconWrap}>
+                      <Text style={styles.cardIcon}>
+                        {booking.services?.icon ?? service?.icon ?? "🔧"}
+                      </Text>
+                    </View>
+                    <View style={styles.cardInfo}>
+                      <Text style={styles.cardService}>
+                        {booking.services?.label ?? service?.label ?? "Service"}
+                      </Text>
+                      <Text style={styles.cardDate}>{date}</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        { backgroundColor: status.bg },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.statusText, { color: status.color }]}
+                      >
+                        {status.label}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.cardDivider} />
+
+                  <View style={styles.cardBottom}>
+                    <View style={styles.cardMeta}>
+                      <Text style={styles.cardMetaIcon}>📍</Text>
+                      <Text style={styles.cardMetaText} numberOfLines={1}>
+                        {booking.address}
+                      </Text>
+                    </View>
+                    {booking.final_price || booking.quoted_price ? (
+                      <Text style={styles.cardPrice}>
+                        ₹{booking.final_price ?? booking.quoted_price}
+                      </Text>
+                    ) : null}
+                  </View>
+
+                  <Text style={styles.cardId}>
+                    Booking ID: #{booking.id.slice(0, 8).toUpperCase()}
+                  </Text>
+
+                  {/* Cancel button — only for pending bookings */}
+                  {booking.status === "pending" && (
+                    <TouchableOpacity
+                      style={styles.cancelBtn}
+                      onPress={() => handleCancel(booking.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.cancelBtnText}>Cancel Booking</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })
+          )}
+
+          {filtered.length > 0 && (
             <TouchableOpacity
-              style={styles.emptyBtn}
-              onPress={() => router.push("/")}
+              style={styles.newBookingBtn}
+              onPress={() => router.push("../(a-home)")}
               activeOpacity={0.8}
             >
-              <Text style={styles.emptyBtnText}>Book a Service</Text>
+              <Text style={styles.newBookingText}>+ Book Another Service</Text>
             </TouchableOpacity>
-          </View>
-        ) : (
-          filtered.map((booking) => {
-            const service = SERVICES.find((s) => s.id === booking.serviceId);
-            const status =
-              STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending;
+          )}
 
-            return (
-              <View key={booking.id} style={styles.card}>
-                {/* Top row */}
-                <View style={styles.cardTop}>
-                  <View style={styles.cardIconWrap}>
-                    <Text style={styles.cardIcon}>{service?.icon ?? "🔧"}</Text>
-                  </View>
-                  <View style={styles.cardInfo}>
-                    <Text style={styles.cardService}>
-                      {service?.label ?? booking.serviceId}
-                    </Text>
-                    <Text style={styles.cardDate}>{booking.date}</Text>
-                  </View>
-                  <View
-                    style={[styles.statusBadge, { backgroundColor: status.bg }]}
-                  >
-                    <Text style={[styles.statusText, { color: status.color }]}>
-                      {status.label}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.cardDivider} />
-
-                {/* Bottom row */}
-                <View style={styles.cardBottom}>
-                  <View style={styles.cardMeta}>
-                    <Text style={styles.cardMetaIcon}>📍</Text>
-                    <Text style={styles.cardMetaText} numberOfLines={1}>
-                      {booking.address}
-                    </Text>
-                  </View>
-                  <View style={styles.cardPriceWrap}>
-                    <Text style={styles.cardPrice}>₹{booking.price}</Text>
-                  </View>
-                </View>
-
-                <Text style={styles.cardId}>Booking ID: #{booking.id}</Text>
-              </View>
-            );
-          })
-        )}
-
-        {/* New booking CTA */}
-        {filtered.length > 0 && (
-          <TouchableOpacity
-            style={styles.newBookingBtn}
-            onPress={() => router.push("../(a-home)")}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.newBookingText}>+ Book Another Service</Text>
-          </TouchableOpacity>
-        )}
-
-        <View style={{ height: 20 }} />
-      </ScrollView>
+          <View style={{ height: 20 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -192,7 +243,6 @@ export default function BookingsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
 
-  /* Header */
   header: { paddingHorizontal: Spacing.xl, paddingBottom: 24, paddingTop: 8 },
   headerRow: {
     flexDirection: "row",
@@ -228,7 +278,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
 
-  /* Filter */
   filterWrap: {
     flexDirection: "row",
     gap: 8,
@@ -239,20 +288,26 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0F2F8",
   },
   filterPill: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
     backgroundColor: "#F4F6FA",
   },
   filterPillActive: { backgroundColor: "rgba(29,184,160,0.12)" },
-  filterText: { fontSize: 13, fontWeight: "600", color: "#9CA3AF" },
+  filterText: { fontSize: 12, fontWeight: "600", color: "#9CA3AF" },
   filterTextActive: { color: "#1DB8A0", fontWeight: "700" },
 
-  /* Body */
+  loadingWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  loadingText: { color: "#9CA3AF", fontSize: 14, fontWeight: "500" },
+
   body: { flex: 1 },
   bodyContent: { padding: Spacing.xl },
 
-  /* Empty state */
   emptyWrap: { alignItems: "center", paddingTop: 60, paddingBottom: 40 },
   emptyEmoji: { fontSize: 56, marginBottom: 20 },
   emptyTitle: {
@@ -278,7 +333,6 @@ const styles = StyleSheet.create({
   },
   emptyBtnText: { color: "#fff", fontSize: 15, fontWeight: "800" },
 
-  /* Booking card */
   card: {
     backgroundColor: "#fff",
     borderRadius: 18,
@@ -319,7 +373,6 @@ const styles = StyleSheet.create({
   cardMeta: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1 },
   cardMetaIcon: { fontSize: 12 },
   cardMetaText: { fontSize: 12, color: "#6B7280", fontWeight: "500", flex: 1 },
-  cardPriceWrap: {},
   cardPrice: { fontSize: 16, fontWeight: "900", color: "#1A6FD4" },
   cardId: {
     fontSize: 10,
@@ -328,8 +381,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
     letterSpacing: 0.3,
   },
+  cancelBtn: {
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#FCA5A5",
+    alignItems: "center",
+  },
+  cancelBtnText: { color: "#EF4444", fontSize: 13, fontWeight: "700" },
 
-  /* New booking btn */
   newBookingBtn: {
     backgroundColor: "#fff",
     borderRadius: 14,

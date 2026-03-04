@@ -27,12 +27,14 @@ export default function LoginScreen() {
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [error, setError] = useState("");
 
   const otpRefs = [
+    useRef<TextInput>(null),
+    useRef<TextInput>(null),
     useRef<TextInput>(null),
     useRef<TextInput>(null),
     useRef<TextInput>(null),
@@ -97,44 +99,32 @@ export default function LoginScreen() {
     }
   };
 
-  const handleVerifyOtp = async () => {
+  const handleVerifyOtpWithCode = async (code: string) => {
     setError("");
-    const code = otp.join("");
-    if (code.length < 4) {
-      setError("Enter the 4-digit OTP");
-      shake();
-      return;
-    }
     setIsLoading(true);
     try {
       const result = await verifyOtp(phone, code);
-      login(result.token);
+      login(result.token, result.userId);
       router.replace("/(tabs)/(a-home)");
     } catch {
       setError("Invalid OTP. Please try again.");
       shake();
-      setOtp(["", "", "", ""]);
+      setOtp(["", "", "", "", "", ""]);
       otpRefs[0].current?.focus();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerifyOtpWithCode = async (code: string) => {
+  const handleVerifyOtp = async () => {
     setError("");
-    setIsLoading(true);
-    try {
-      const result = await verifyOtp(phone, code);
-      login(result.token);
-      router.replace("/(tabs)/(a-home)");
-    } catch {
-      setError("Invalid OTP. Please try again.");
+    const code = otp.join("");
+    if (code.length < 6) {
+      setError("Enter the 6-digit OTP");
       shake();
-      setOtp(["", "", "", ""]);
-      otpRefs[0].current?.focus();
-    } finally {
-      setIsLoading(false);
+      return;
     }
+    handleVerifyOtpWithCode(code);
   };
 
   const handleOtpChange = (val: string, idx: number) => {
@@ -143,8 +133,8 @@ export default function LoginScreen() {
     next[idx] = val.slice(-1);
     setOtp(next);
     setError("");
-    if (val && idx < 3) otpRefs[idx + 1].current?.focus();
-    if (next.every((d) => d !== "") && idx === 3) {
+    if (val && idx < 5) otpRefs[idx + 1].current?.focus();
+    if (next.every((d) => d !== "") && idx === 5) {
       setTimeout(() => handleVerifyOtpWithCode(next.join("")), 100);
     }
   };
@@ -157,7 +147,7 @@ export default function LoginScreen() {
 
   const handleResend = async () => {
     if (resendTimer > 0) return;
-    setOtp(["", "", "", ""]);
+    setOtp(["", "", "", "", "", ""]);
     setError("");
     setIsLoading(true);
     try {
@@ -173,7 +163,6 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.root}>
-      {/* GRADIENT HEADER — fixed, not inside scroll */}
       <LinearGradient
         colors={["#1DB8A0", "#1A6FD4"]}
         start={{ x: 0, y: 0 }}
@@ -219,7 +208,6 @@ export default function LoginScreen() {
         </SafeAreaView>
       </LinearGradient>
 
-      {/* CARD AREA — keyboard avoiding wraps only the card */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.kav}
@@ -304,7 +292,7 @@ export default function LoginScreen() {
                   style={styles.backRow}
                   onPress={() => {
                     setStep("phone");
-                    setOtp(["", "", "", ""]);
+                    setOtp(["", "", "", "", "", ""]);
                     setError("");
                   }}
                   activeOpacity={0.7}
@@ -315,7 +303,7 @@ export default function LoginScreen() {
 
                 <Text style={styles.cardTitle}>Enter OTP</Text>
                 <Text style={styles.cardSub}>
-                  4-digit code sent to +91 {phone}
+                  6-digit code sent to +91 {phone}
                 </Text>
 
                 <View style={styles.otpRow}>
@@ -424,14 +412,12 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
 
-  /* HEADER — fixed height, not in scroll */
   header: {
     paddingHorizontal: 24,
     paddingBottom: 48,
     paddingTop: 0,
   },
   headerContent: { paddingTop: 12 },
-
   heroTitle: {
     fontSize: 36,
     fontWeight: "900",
@@ -446,7 +432,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 20,
   },
-
   howStrip: {
     flexDirection: "row",
     alignItems: "center",
@@ -478,11 +463,9 @@ const styles = StyleSheet.create({
   howArrow: { paddingHorizontal: 2 },
   howArrowText: { color: "rgba(255,255,255,0.3)", fontSize: 18 },
 
-  /* KAV wraps just the card area */
   kav: { flex: 1, marginTop: -24 },
   scrollContent: { flexGrow: 1, paddingHorizontal: 16, paddingTop: 0 },
 
-  /* CARD */
   card: {
     backgroundColor: "#fff",
     borderRadius: 28,
@@ -508,7 +491,6 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 
-  /* PHONE INPUT */
   fieldWrap: { marginBottom: 20 },
   inputRow: {
     flexDirection: "row",
@@ -547,21 +529,21 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
 
-  /* OTP */
+  /* 6 OTP boxes — slightly smaller to fit */
   otpRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: 8,
     marginBottom: 8,
     justifyContent: "center",
   },
   otpBox: {
-    width: 60,
-    height: 64,
-    borderRadius: 16,
+    width: 46,
+    height: 56,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: "#EAECF0",
     backgroundColor: "#F8F9FB",
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "800",
     color: "#0B0F1A",
     textAlign: "center",
@@ -594,7 +576,6 @@ const styles = StyleSheet.create({
   backArrow: { color: "#1A6FD4", fontSize: 15, fontWeight: "700" },
   backText: { color: "#1A6FD4", fontSize: 13, fontWeight: "600" },
 
-  /* ACTION BUTTON */
   actionBtn: {
     borderRadius: 16,
     overflow: "hidden",

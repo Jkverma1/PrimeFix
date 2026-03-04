@@ -1,9 +1,10 @@
-// app/(d-account)/notifications.tsx
+// app/(shared)/notifications.tsx
 
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -11,56 +12,21 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { Spacing } from "../../constants/colors";
+import { useNotificationStore } from "../../store/NotificationStore";
 
-const NOTIFICATIONS = [
-  {
-    id: "1",
-    emoji: "✅",
-    title: "Booking Confirmed",
-    desc: "Your Plumber booking has been confirmed.",
-    time: "2 hours ago",
-    read: false,
-    type: "booking",
-  },
-  {
-    id: "2",
-    emoji: "👷",
-    title: "Professional Assigned",
-    desc: "Ramesh Kumar has been assigned to your request #PF-2024-001.",
-    time: "1 hour ago",
-    read: false,
-    type: "booking",
-  },
-  {
-    id: "3",
-    emoji: "⭐",
-    title: "Rate Your Experience",
-    desc: "How was your Plumber service? Tap to leave a review.",
-    time: "Yesterday",
-    read: true,
-    type: "review",
-  },
-  {
-    id: "4",
-    emoji: "🎁",
-    title: "Referral Reward Earned",
-    desc: "Rahul S. completed a booking using your code. ₹75 credit added!",
-    time: "Feb 24",
-    read: true,
-    type: "refer",
-  },
-  {
-    id: "5",
-    emoji: "📢",
-    title: "New Services Coming Soon",
-    desc: "Carpenter and Painter services are launching next month!",
-    time: "Feb 20",
-    read: true,
-    type: "promo",
-  },
-];
+// Map notification types to emojis
+const TYPE_EMOJI: Record<string, string> = {
+  booking_confirmed: "✅",
+  booking_in_progress: "🔧",
+  booking_completed: "🎉",
+  booking_cancelled: "❌",
+  referral_earned: "🎁",
+  referral_paid: "💰",
+  general: "📢",
+};
 
 const PREFS = [
   {
@@ -85,26 +51,46 @@ const PREFS = [
   },
 ];
 
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
 export default function NotificationsScreen() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+  } = useNotificationStore();
+
+  const [tab, setTab] = useState<"all" | "settings">("all");
+  const [refreshing, setRefreshing] = useState(false);
   const [prefs, setPrefs] = useState<Record<string, boolean>>({
     booking: true,
     refer: true,
     review: true,
     promo: false,
   });
-  const [tab, setTab] = useState<"all" | "settings">("all");
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAllRead = () =>
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-
-  const markRead = (id: string) =>
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    );
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchNotifications();
+    setRefreshing(false);
+  }, []);
 
   return (
     <View style={styles.root}>
@@ -133,7 +119,7 @@ export default function NotificationsScreen() {
               )}
             </View>
             {unreadCount > 0 ? (
-              <TouchableOpacity onPress={markAllRead} activeOpacity={0.7}>
+              <TouchableOpacity onPress={markAllAsRead} activeOpacity={0.7}>
                 <Text style={styles.markAllText}>Mark all read</Text>
               </TouchableOpacity>
             ) : (
@@ -141,51 +127,49 @@ export default function NotificationsScreen() {
             )}
           </View>
 
-          {/* Tab toggle */}
           <View style={styles.tabRow}>
-            <TouchableOpacity
-              style={[styles.tabPill, tab === "all" && styles.tabPillActive]}
-              onPress={() => setTab("all")}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.tabPillText,
-                  tab === "all" && styles.tabPillTextActive,
-                ]}
+            {(["all", "settings"] as const).map((t) => (
+              <TouchableOpacity
+                key={t}
+                style={[styles.tabPill, tab === t && styles.tabPillActive]}
+                onPress={() => setTab(t)}
+                activeOpacity={0.7}
               >
-                All
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.tabPill,
-                tab === "settings" && styles.tabPillActive,
-              ]}
-              onPress={() => setTab("settings")}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.tabPillText,
-                  tab === "settings" && styles.tabPillTextActive,
-                ]}
-              >
-                Settings
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.tabPillText,
+                    tab === t && styles.tabPillTextActive,
+                  ]}
+                >
+                  {t === "all" ? "All" : "Settings"}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </SafeAreaView>
       </LinearGradient>
 
-      <ScrollView
-        style={styles.body}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {tab === "all" ? (
-          <>
-            {notifications.length === 0 ? (
+      {/* ── BODY ── */}
+      {isLoading && notifications.length === 0 ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#1DB8A0" />
+          <Text style={styles.loadingText}>Loading notifications...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.body}
+          contentContainerStyle={styles.bodyContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#1DB8A0"
+            />
+          }
+        >
+          {tab === "all" ? (
+            notifications.length === 0 ? (
               <View style={styles.emptyWrap}>
                 <Text style={styles.emptyEmoji}>🔔</Text>
                 <Text style={styles.emptyTitle}>No notifications yet</Text>
@@ -200,66 +184,73 @@ export default function NotificationsScreen() {
                     key={n.id}
                     style={[
                       styles.notifCard,
-                      !n.read && styles.notifCardUnread,
+                      !n.is_read && styles.notifCardUnread,
                       i === notifications.length - 1 && styles.notifCardLast,
                     ]}
-                    onPress={() => markRead(n.id)}
+                    onPress={() => !n.is_read && markAsRead(n.id)}
                     activeOpacity={0.75}
                   >
                     <View style={styles.notifIconWrap}>
-                      <Text style={styles.notifEmoji}>{n.emoji}</Text>
+                      <Text style={styles.notifEmoji}>
+                        {TYPE_EMOJI[n.type] ?? "📢"}
+                      </Text>
                     </View>
                     <View style={styles.notifContent}>
                       <View style={styles.notifTitleRow}>
                         <Text style={styles.notifTitle}>{n.title}</Text>
-                        {!n.read && <View style={styles.dotUnread} />}
+                        {!n.is_read && <View style={styles.dotUnread} />}
                       </View>
-                      <Text style={styles.notifDesc}>{n.desc}</Text>
-                      <Text style={styles.notifTime}>{n.time}</Text>
+                      <Text style={styles.notifDesc}>{n.body}</Text>
+                      <Text style={styles.notifTime}>
+                        {timeAgo(n.created_at)}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 ))}
               </View>
-            )}
-          </>
-        ) : (
-          <>
-            <Text style={styles.settingsLabel}>Notification Preferences</Text>
-            <View style={styles.prefCard}>
-              {PREFS.map((p, i) => (
-                <View
-                  key={p.key}
-                  style={[
-                    styles.prefRow,
-                    i === PREFS.length - 1 && styles.prefRowLast,
-                  ]}
-                >
-                  <View style={styles.prefText}>
-                    <Text style={styles.prefLabel}>{p.label}</Text>
-                    <Text style={styles.prefSub}>{p.sub}</Text>
+            )
+          ) : (
+            <>
+              <Text style={styles.settingsLabel}>Notification Preferences</Text>
+              <View style={styles.prefCard}>
+                {PREFS.map((p, i) => (
+                  <View
+                    key={p.key}
+                    style={[
+                      styles.prefRow,
+                      i === PREFS.length - 1 && styles.prefRowLast,
+                    ]}
+                  >
+                    <View style={styles.prefText}>
+                      <Text style={styles.prefLabel}>{p.label}</Text>
+                      <Text style={styles.prefSub}>{p.sub}</Text>
+                    </View>
+                    <Switch
+                      value={prefs[p.key]}
+                      onValueChange={(v) =>
+                        setPrefs((prev) => ({ ...prev, [p.key]: v }))
+                      }
+                      trackColor={{ false: "#E5E7EB", true: "#1DB8A0" }}
+                      thumbColor="#ffffff"
+                    />
                   </View>
-                  <Switch
-                    value={prefs[p.key]}
-                    onValueChange={(v) =>
-                      setPrefs((prev) => ({ ...prev, [p.key]: v }))
-                    }
-                    trackColor={{ false: "#E5E7EB", true: "#1DB8A0" }}
-                    thumbColor="#ffffff"
-                  />
-                </View>
-              ))}
-            </View>
-          </>
-        )}
-        <View style={{ height: 20 }} />
-      </ScrollView>
+                ))}
+              </View>
+              <Text style={styles.prefNote}>
+                Push notification settings coming soon. For now these control
+                what appears in this screen.
+              </Text>
+            </>
+          )}
+          <View style={{ height: 20 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
-
   header: { paddingHorizontal: Spacing.xl, paddingBottom: 16, paddingTop: 8 },
   headerRow: {
     flexDirection: "row",
@@ -296,7 +287,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-
   tabRow: { flexDirection: "row", gap: 8 },
   tabPill: {
     paddingHorizontal: 20,
@@ -311,10 +301,15 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
   },
   tabPillTextActive: { color: "#1DB8A0", fontWeight: "700" },
-
+  loadingWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  loadingText: { color: "#9CA3AF", fontSize: 14, fontWeight: "500" },
   body: { flex: 1 },
   bodyContent: { padding: Spacing.xl },
-
   list: {
     backgroundColor: "#fff",
     borderRadius: 20,
@@ -366,7 +361,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   notifTime: { fontSize: 11, color: "#C0C8D8", fontWeight: "600" },
-
   emptyWrap: { alignItems: "center", paddingVertical: 60 },
   emptyEmoji: { fontSize: 52, marginBottom: 16 },
   emptyTitle: {
@@ -381,7 +375,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     textAlign: "center",
   },
-
   settingsLabel: {
     fontSize: 11,
     fontWeight: "700",
@@ -418,4 +411,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   prefSub: { fontSize: 12, color: "#9CA3AF", fontWeight: "500" },
+  prefNote: {
+    fontSize: 12,
+    color: "#C0C8D8",
+    fontWeight: "500",
+    textAlign: "center",
+    marginTop: 12,
+    lineHeight: 18,
+  },
 });
