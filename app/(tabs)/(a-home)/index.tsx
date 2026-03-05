@@ -1,8 +1,12 @@
+// app/(tabs)/(a-home)/index.tsx
+
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -13,34 +17,194 @@ import {
 } from "react-native";
 import AppButton from "../../../components/AppButton";
 import OnboardingModal from "../../../components/OnboardingModal";
-import ServiceCard from "../../../components/ServiceCard";
 import { Spacing } from "../../../constants/colors";
-import { SERVICES } from "../../../constants/services";
 import { useBootstrap } from "../../../hooks/useBootstrap";
+import { supabase } from "../../../lib/supabase";
 import { useNotificationStore } from "../../../store/NotificationStore";
-import { ServiceType } from "../../../types";
+import { CARD_COLORS } from "@/types/colors.type";
+
+interface Service {
+  id: string;
+  slug: string;
+  label: string;
+  icon: string;
+  description: string;
+  starting_price: number;
+  is_active: boolean;
+  sort_order: number;
+}
+
+function ServiceCard({
+  service,
+  colorPair,
+  selected,
+  onSelect,
+}: {
+  service: Service;
+  colorPair: string[];
+  selected: boolean;
+  onSelect: (slug: string) => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 0.94,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    onSelect(service.slug);
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale }], width: "48%" }}>
+      <TouchableOpacity
+        style={[
+          styles.serviceCard,
+          { backgroundColor: colorPair[0] },
+          selected && styles.serviceCardSelected,
+          selected && { borderColor: colorPair[1] },
+        ]}
+        onPress={handlePress}
+        activeOpacity={1}
+      >
+        {/* Selected check */}
+        {selected && (
+          <View style={[styles.checkBadge, { backgroundColor: colorPair[1] }]}>
+            <Text style={styles.checkBadgeText}>✓</Text>
+          </View>
+        )}
+
+        {/* Icon circle */}
+        <View
+          style={[
+            styles.iconCircle,
+            { backgroundColor: selected ? colorPair[1] + "22" : "#fff" },
+          ]}
+        >
+          <Text style={styles.serviceEmoji}>{service.icon}</Text>
+        </View>
+
+        {/* Label + subtitle */}
+        <Text
+          style={[styles.serviceLabel, selected && { color: colorPair[1] }]}
+        >
+          {service.label}
+        </Text>
+        {service.description ? (
+          <Text style={styles.serviceDesc} numberOfLines={2}>
+            {service.description}
+          </Text>
+        ) : null}
+
+        {/* Price pill */}
+        <View
+          style={[
+            styles.pricePill,
+            { backgroundColor: selected ? colorPair[1] : "#fff" },
+          ]}
+        >
+          <Text
+            style={[
+              styles.priceText,
+              { color: selected ? "#fff" : colorPair[1] },
+            ]}
+          >
+            from ₹{service.starting_price}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+function ComingSoonCard({
+  service,
+  colorPair,
+}: {
+  service: Service;
+  colorPair: string[];
+}) {
+  return (
+    <View style={[styles.comingSoonCard, { backgroundColor: colorPair[0] }]}>
+      <View style={styles.soonBanner}>
+        <Text style={styles.soonBannerText}>SOON</Text>
+      </View>
+      <View
+        style={[
+          styles.iconCircle,
+          { backgroundColor: "rgba(255,255,255,0.6)" },
+        ]}
+      >
+        <Text style={[styles.serviceEmoji, { opacity: 0.45 }]}>
+          {service.icon}
+        </Text>
+      </View>
+      <Text style={styles.comingSoonLabel}>{service.label}</Text>
+      {service.description ? (
+        <Text style={styles.comingSoonDesc} numberOfLines={2}>
+          {service.description}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
 
 export default function HomeScreen() {
   useBootstrap();
   const router = useRouter();
   const unreadCount = useNotificationStore((s) => s.unreadCount);
-  const [selectedService, setSelectedService] = useState<ServiceType | null>(
-    null,
-  );
+
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-  const filtered = SERVICES.filter((s) =>
-    s.label.toLowerCase().includes(query.toLowerCase()),
-  );
+  const fetchServices = async () => {
+    const { data } = await supabase
+      .from("services")
+      .select("*")
+      .order("sort_order");
+    setServices(data ?? []);
+  };
 
-  React.useEffect(() => {
-    if (selectedService && !filtered.find((s) => s.id === selectedService)) {
-      setSelectedService(null);
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  // Clear selection if filtered out
+  useEffect(() => {
+    if (selectedSlug && !activeServices.find((s) => s.slug === selectedSlug)) {
+      setSelectedSlug(null);
     }
   }, [query]);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchServices();
+    setRefreshing(false);
+  };
+
+  const activeServices = services.filter(
+    (s) => s.is_active && s.label.toLowerCase().includes(query.toLowerCase()),
+  );
+  const comingSoonServices = services.filter(
+    (s) => !s.is_active && s.label.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  const handleSelect = (slug: string) => {
+    setSelectedSlug((prev) => (prev === slug ? null : slug));
+  };
+
   const handleContinue = () => {
-    if (!selectedService) {
+    if (!selectedSlug) {
       Alert.alert(
         "Select a Service",
         "Please choose a service before continuing.",
@@ -49,16 +213,17 @@ export default function HomeScreen() {
     }
     router.push({
       pathname: "/request",
-      params: { serviceType: selectedService },
+      params: { serviceType: selectedSlug },
     });
   };
 
+  const selectedService = services.find((s) => s.slug === selectedSlug);
+
   return (
     <View style={styles.root}>
-      {/* ── ONBOARDING MODAL — shows once for new users ── */}
       <OnboardingModal />
 
-      {/* ── GRADIENT HEADER ── */}
+      {/* ── HEADER ── */}
       <LinearGradient
         colors={["#1DB8A0", "#1A6FD4"]}
         start={{ x: 0, y: 0 }}
@@ -113,8 +278,15 @@ export default function HomeScreen() {
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#1DB8A0"
+          />
+        }
       >
-        {/* ── BANNER ── */}
+        {/* Banner */}
         <LinearGradient
           colors={["#0d1a3a", "#1a3a6e"]}
           start={{ x: 0, y: 0 }}
@@ -154,30 +326,51 @@ export default function HomeScreen() {
           </View>
         </LinearGradient>
 
-        <Text style={styles.sectionTitle}>Explore all services</Text>
-
-        {filtered.length > 0 ? (
-          <View style={styles.cardsGrid}>
-            {filtered.map((service) => (
-              <ServiceCard
-                key={service.id}
-                service={service}
-                selected={selectedService === service.id}
-                onSelect={setSelectedService}
-              />
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.noResults}>No services found for "{query}"</Text>
+        {/* ── ACTIVE SERVICES ── */}
+        {activeServices.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Our Services</Text>
+            <View style={styles.cardsGrid}>
+              {activeServices.map((service, idx) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  colorPair={CARD_COLORS[idx % CARD_COLORS.length]}
+                  selected={selectedSlug === service.slug}
+                  onSelect={handleSelect}
+                />
+              ))}
+            </View>
+          </>
         )}
 
-        {selectedService && (
-          <Text style={styles.hint}>
-            Selected:{" "}
-            <Text style={styles.hintBold}>
-              {SERVICES.find((s) => s.id === selectedService)?.label}
-            </Text>
-          </Text>
+        {/* ── COMING SOON ── */}
+        {comingSoonServices.length > 0 && (
+          <>
+            <View style={styles.comingSoonHeader}>
+              <Text style={styles.sectionTitle}>Coming Soon</Text>
+              <View style={styles.soonChip}>
+                <Text style={styles.soonChipText}>🚀 Launching soon</Text>
+              </View>
+            </View>
+            <View style={styles.cardsGrid}>
+              {comingSoonServices.map((service, idx) => (
+                <ComingSoonCard
+                  key={service.id}
+                  service={service}
+                  colorPair={
+                    CARD_COLORS[
+                      (activeServices.length + idx) % CARD_COLORS.length
+                    ]
+                  }
+                />
+              ))}
+            </View>
+          </>
+        )}
+
+        {activeServices.length === 0 && comingSoonServices.length === 0 && (
+          <Text style={styles.noResults}>No services found for "{query}"</Text>
         )}
 
         <View style={{ height: 20 }} />
@@ -186,9 +379,13 @@ export default function HomeScreen() {
       {/* ── FOOTER ── */}
       <View style={styles.footer}>
         <AppButton
-          title="Request Service"
+          title={
+            selectedService
+              ? `Book ${selectedService.label}  →`
+              : "Select a Service"
+          }
           onPress={handleContinue}
-          disabled={!selectedService}
+          disabled={!selectedSlug}
         />
       </View>
     </View>
@@ -197,6 +394,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
+
+  // Header
   header: { paddingHorizontal: Spacing.xl, paddingBottom: 24, paddingTop: 8 },
   headerTop: {
     flexDirection: "row",
@@ -264,12 +463,16 @@ const styles = StyleSheet.create({
   },
   clearBtn: { padding: 4 },
   clearIcon: { fontSize: 12, color: "#9CA3AF" },
+
+  // Body
   body: { flex: 1, backgroundColor: "#F4F6FA" },
   bodyContent: {
     paddingHorizontal: Spacing.xl,
     paddingTop: 16,
     paddingBottom: 8,
   },
+
+  // Banner
   banner: {
     borderRadius: 18,
     paddingVertical: 20,
@@ -329,6 +532,8 @@ const styles = StyleSheet.create({
   },
   bannerEmoji: { fontSize: 38 },
   bannerEmojiSmall: { fontSize: 18 },
+
+  // Section
   sectionTitle: {
     fontSize: 17,
     fontWeight: "700",
@@ -336,26 +541,130 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     letterSpacing: -0.2,
   },
-  cardsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    justifyContent: "space-between",
-  },
   noResults: {
     textAlign: "center",
     color: "#9CA3AF",
     fontSize: 14,
     marginVertical: 32,
   },
-  hint: {
-    textAlign: "center",
-    color: "#6B7280",
-    fontSize: 13,
-    marginTop: 14,
-    fontWeight: "500",
+  cardsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 24,
   },
-  hintBold: { fontWeight: "700", color: "#1A6FD4" },
+
+  // Active service card
+  serviceCard: {
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: "transparent",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+    gap: 8,
+  },
+  serviceCardSelected: {
+    borderWidth: 2,
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  checkBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkBadgeText: { color: "#fff", fontSize: 12, fontWeight: "900" },
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  serviceEmoji: { fontSize: 28 },
+  serviceLabel: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0B0F1A",
+    letterSpacing: -0.2,
+  },
+  serviceDesc: {
+    fontSize: 11,
+    color: "#9CA3AF",
+    fontWeight: "500",
+    lineHeight: 15,
+  },
+  pricePill: {
+    alignSelf: "flex-start",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginTop: 2,
+  },
+  priceText: { fontSize: 11, fontWeight: "700" },
+
+  // Coming soon card
+  comingSoonHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  soonChip: {
+    backgroundColor: "#FFF7ED",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  soonChipText: { fontSize: 11, color: "#F59E0B", fontWeight: "700" },
+  comingSoonCard: {
+    width: "48%",
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: "rgba(0,0,0,0.05)",
+    gap: 8,
+    opacity: 0.6,
+  },
+  soonBanner: {
+    position: "absolute",
+    top: 12,
+    right: -1,
+    backgroundColor: "#F59E0B",
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  soonBannerText: {
+    fontSize: 9,
+    fontWeight: "900",
+    color: "#fff",
+    letterSpacing: 1,
+  },
+  comingSoonLabel: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#9CA3AF",
+    letterSpacing: -0.2,
+  },
+  comingSoonDesc: {
+    fontSize: 11,
+    color: "#C0C8D8",
+    fontWeight: "500",
+    lineHeight: 15,
+  },
+
+  // Footer
   footer: {
     paddingHorizontal: Spacing.xl,
     paddingTop: 12,

@@ -105,7 +105,20 @@ export default function LoginScreen() {
     try {
       const result = await verifyOtp(phone, code);
       login(result.token, result.userId);
-      router.replace("/(tabs)/(a-home)");
+
+      // Small delay to ensure Supabase session is committed
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Now fetch profile safely
+      const { useUserStore } = await import("../../store/UserStore");
+      await useUserStore.getState().fetchProfile();
+      const profile = useUserStore.getState().profile;
+
+      if (profile?.is_admin) {
+        router.replace("/(admin)/(a-dashboard)");
+      } else {
+        router.replace("/(tabs)/(a-home)");
+      }
     } catch {
       setError("Invalid OTP. Please try again.");
       shake();
@@ -127,13 +140,35 @@ export default function LoginScreen() {
     handleVerifyOtpWithCode(code);
   };
 
+  // ── KEY FIX: handles both SMS autofill/paste AND normal single-digit entry ──
   const handleOtpChange = (val: string, idx: number) => {
-    if (!/^\d*$/.test(val)) return;
+    // Strip non-digits
+    const digits = val.replace(/\D/g, "");
+
+    // Autofill or paste — iOS delivers full 6-digit string to first focused box
+    if (digits.length > 1) {
+      const chars = digits.slice(0, 6).split("");
+      const next = Array(6)
+        .fill("")
+        .map((_, i) => chars[i] ?? "");
+      setOtp(next);
+      setError("");
+      // Focus last filled box so keyboard stays up naturally
+      const lastIdx = Math.min(chars.length - 1, 5);
+      otpRefs[lastIdx].current?.focus();
+      // Auto-submit once all 6 filled
+      if (chars.length >= 6) {
+        setTimeout(() => handleVerifyOtpWithCode(next.join("")), 100);
+      }
+      return;
+    }
+
+    // Normal single-digit typing
     const next = [...otp];
-    next[idx] = val.slice(-1);
+    next[idx] = digits;
     setOtp(next);
     setError("");
-    if (val && idx < 5) otpRefs[idx + 1].current?.focus();
+    if (digits && idx < 5) otpRefs[idx + 1].current?.focus();
     if (next.every((d) => d !== "") && idx === 5) {
       setTimeout(() => handleVerifyOtpWithCode(next.join("")), 100);
     }
@@ -320,9 +355,13 @@ export default function LoginScreen() {
                       onChangeText={(v) => handleOtpChange(v, idx)}
                       onKeyPress={(e) => handleOtpKeyPress(e, idx)}
                       keyboardType="number-pad"
-                      maxLength={1}
+                      // ── FIX 1: first box allows 6 chars so autofill/paste works ──
+                      maxLength={idx === 0 ? 6 : 1}
                       textAlign="center"
                       selectTextOnFocus
+                      // ── FIX 2: tells iOS this is an OTP field → shows autofill bar ──
+                      textContentType="oneTimeCode"
+                      autoComplete={idx === 0 ? "one-time-code" : "off"}
                     />
                   ))}
                 </View>
@@ -411,12 +450,7 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F4F6FA" },
-
-  header: {
-    paddingHorizontal: 24,
-    paddingBottom: 48,
-    paddingTop: 0,
-  },
+  header: { paddingHorizontal: 24, paddingBottom: 48, paddingTop: 0 },
   headerContent: { paddingTop: 12 },
   heroTitle: {
     fontSize: 36,
@@ -462,10 +496,8 @@ const styles = StyleSheet.create({
   howLabel: { fontSize: 12, fontWeight: "600", color: "rgba(255,255,255,0.8)" },
   howArrow: { paddingHorizontal: 2 },
   howArrowText: { color: "rgba(255,255,255,0.3)", fontSize: 18 },
-
   kav: { flex: 1, marginTop: -24 },
   scrollContent: { flexGrow: 1, paddingHorizontal: 16, paddingTop: 0 },
-
   card: {
     backgroundColor: "#fff",
     borderRadius: 28,
@@ -490,7 +522,6 @@ const styles = StyleSheet.create({
     marginBottom: 22,
     lineHeight: 19,
   },
-
   fieldWrap: { marginBottom: 20 },
   inputRow: {
     flexDirection: "row",
@@ -528,8 +559,6 @@ const styles = StyleSheet.create({
     marginTop: 7,
     marginLeft: 2,
   },
-
-  /* 6 OTP boxes — slightly smaller to fit */
   otpRow: {
     flexDirection: "row",
     gap: 8,
@@ -550,7 +579,6 @@ const styles = StyleSheet.create({
   },
   otpBoxFilled: { borderColor: "#1DB8A0", backgroundColor: "#F0FBF8" },
   otpBoxError: { borderColor: "#EF4444", backgroundColor: "#FFF5F5" },
-
   resendRow: {
     flexDirection: "row",
     justifyContent: "center",
@@ -561,7 +589,6 @@ const styles = StyleSheet.create({
   resendLabel: { fontSize: 13, color: "#9CA3AF", fontWeight: "500" },
   resendBtn: { fontSize: 13, color: "#1A6FD4", fontWeight: "700" },
   resendBtnDisabled: { color: "#C0C8D8" },
-
   backRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -575,7 +602,6 @@ const styles = StyleSheet.create({
   },
   backArrow: { color: "#1A6FD4", fontSize: 15, fontWeight: "700" },
   backText: { color: "#1A6FD4", fontSize: 13, fontWeight: "600" },
-
   actionBtn: {
     borderRadius: 16,
     overflow: "hidden",
@@ -598,7 +624,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.3,
   },
-
   disclaimer: {
     fontSize: 11,
     color: "#9CA3AF",
@@ -608,7 +633,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   link: { color: "#1A6FD4", fontWeight: "600" },
-
   trustRow: {
     flexDirection: "row",
     alignItems: "center",

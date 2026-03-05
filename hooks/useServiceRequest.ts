@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { SERVICES } from "../constants/services";
+// hooks/useServiceRequest.ts
+
 import { useBookingStore } from "../store/BookingStore";
 import { ServiceType } from "../types";
 
@@ -17,17 +17,20 @@ export function useServiceRequest() {
   const error = useBookingStore((s) => s.error);
 
   const submit = async (input: SubmitInput) => {
-    const service = SERVICES.find((s) => s.id === input.serviceType);
-    if (!service) throw new Error("Invalid service type");
-
     const { supabase } = await import("../lib/supabase");
+
     const { data: svcRow, error: svcError } = await supabase
       .from("services")
       .select("id")
       .eq("slug", input.serviceType)
       .single();
 
-    if (svcError || !svcRow) throw new Error("Service not found");
+    if (svcError || !svcRow) {
+      throw new Error(
+        `Service "${input.serviceType}" not found in database. ` +
+          `Make sure the services table slugs match your local SERVICES constant.`,
+      );
+    }
 
     const booking = await createBooking({
       service_id: svcRow.id,

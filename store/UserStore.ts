@@ -13,6 +13,7 @@ export interface UserProfile {
   referral_code: string;
   referred_by: string | null;
   created_at: string;
+  is_admin: boolean;
 }
 
 export interface SavedAddress {

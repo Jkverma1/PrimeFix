@@ -1,16 +1,10 @@
 // store/bookingStore.ts
 
+import { BookingStatus } from "@/types/customer.type";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { supabase } from "../lib/supabase";
-
-export type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
 
 export interface Booking {
   id: string;

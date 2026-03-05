@@ -173,7 +173,7 @@ export default function AccountScreen() {
             emoji="📋"
             label="My Bookings"
             sub="View all your service requests"
-            onPress={() => router.push("../(bookings)")}
+            onPress={() => router.push("../(b-bookings)")}
           />
           <MenuItem
             emoji="🗺️"
